@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/skrix/cloud_labs#readme",
   "dependencies": {
-    "express": "^5.3.0"
+    "express": "^5.3.0",
+    "pg": "^8.23.1"
   }
 }
