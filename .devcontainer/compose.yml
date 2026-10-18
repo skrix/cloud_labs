@@ -5,6 +5,7 @@ services:
     volumes:
       - ..:/workspaces/iot-hub:cached
       - aws-config:/home/node/.aws
+      - ${HOME}/.zshrc:/home/node/.zshrc:ro
     environment:
       PGHOST: db
       PGUSER: postgres
