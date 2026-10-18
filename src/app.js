@@ -1,5 +1,5 @@
-import express from 'express';
-import pool from './db.js';
+const express = require('express');
+const { sequelize } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,7 +17,7 @@ app.get('/api/health', (req, res) => {
 
 app.get('/api/health/db', async (req, res) => {
   try {
-    await pool.query('SELECT 1');
+    await sequelize.authenticate();
     res.json({
       status: 'ok',
       timestamp: new Date().toISOString()

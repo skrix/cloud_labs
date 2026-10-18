@@ -14,13 +14,21 @@
   "keywords": [],
   "author": "Andrew Shyika",
   "license": "ISC",
-  "type": "module",
+  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/skrix/cloud_labs/issues"
   },
   "homepage": "https://github.com/skrix/cloud_labs#readme",
   "dependencies": {
     "express": "^5.3.0",
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.8",
+    "sequelize-cli": "^6.6.5"
+  },
+  "allowScripts": {
+    "esbuild@0.18.20": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true
   }
 }

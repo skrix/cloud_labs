@@ -1,10 +1,8 @@
-import pg from 'pg';
+const { Sequelize } = require('sequelize');
+const config = require('./db/config');
 
-const { Pool } = pg;
-const pool = new Pool();
+const env = process.env.NODE_ENV || 'development';
 
-pool.on('error', (err) => {
-  console.error('Database pool error:', err.message);
-});
+const sequelize = new Sequelize(config[env]);
 
-export default pool;
+module.exports = { sequelize };
