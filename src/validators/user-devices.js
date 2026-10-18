@@ -1,70 +1,52 @@
-const { BadRequestError } = require('../errors');
-const {
-  requireObject,
-  requireString,
-  optionalString,
-  requireUuid,
-  nullableUuid,
-  removeUndefined,
-  requireAtLeastOneField,
-} = require('./helpers');
+const { HttpError } = require('../errors');
+const { requireObject, requireString, optionalString, requireUuid, optionalUuid, pick } = require('./helpers');
 
 const DEFAULT_READINGS_LIMIT = 100;
 const MAX_READINGS_LIMIT = 1000;
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}/;
-const DIGITS_PATTERN = /^\d+$/;
 
 function validateUserDeviceCreate(body) {
   requireObject(body);
-  return removeUndefined({
-    name: requireString(body, 'name'),
-    deviceId: requireUuid(body, 'deviceId'),
-    firmwareId: nullableUuid(body, 'firmwareId'),
-  });
+  requireString(body.name, 'name');
+  requireUuid(body.deviceId, 'deviceId');
+  optionalUuid(body.firmwareId, 'firmwareId');
+  return pick(body, ['name', 'deviceId', 'firmwareId']);
 }
 
 function validateUserDeviceUpdate(body) {
   requireObject(body);
-  const changes = removeUndefined({
-    name: optionalString(body, 'name'),
-    firmwareId: nullableUuid(body, 'firmwareId'),
-  });
-  requireAtLeastOneField(changes);
-  return changes;
+  optionalString(body.name, 'name');
+  optionalUuid(body.firmwareId, 'firmwareId');
+  return pick(body, ['name', 'firmwareId']);
 }
 
-function optionalIsoDate(query, field) {
-  const value = query[field];
+function parseDate(value, field, defaultDate) {
   if (value === undefined) {
-    return undefined;
+    return defaultDate;
   }
   const date = new Date(value);
-  const isValid = typeof value === 'string' && ISO_DATE_PATTERN.test(value) && !Number.isNaN(date.getTime());
-  if (!isValid) {
-    throw new BadRequestError(`${field} must be an ISO 8601 date`);
+  if (Number.isNaN(date.getTime())) {
+    throw new HttpError(400, `${field} must be an ISO 8601 date`);
   }
   return date;
 }
 
-function readingsLimit(query) {
-  const value = query.limit;
+function parseLimit(value) {
   if (value === undefined) {
     return DEFAULT_READINGS_LIMIT;
   }
   const limit = Number(value);
-  const isValid = typeof value === 'string' && DIGITS_PATTERN.test(value) && limit >= 1 && limit <= MAX_READINGS_LIMIT;
-  if (!isValid) {
-    throw new BadRequestError(`limit must be an integer from 1 to ${MAX_READINGS_LIMIT}`);
+  if (!Number.isInteger(limit) || limit < 1 || limit > MAX_READINGS_LIMIT) {
+    throw new HttpError(400, `limit must be an integer from 1 to ${MAX_READINGS_LIMIT}`);
   }
   return limit;
 }
 
 function validateReadingsQuery(query) {
-  return removeUndefined({
-    from: optionalIsoDate(query, 'from'),
-    to: optionalIsoDate(query, 'to'),
-    limit: readingsLimit(query),
-  });
+  return {
+    from: parseDate(query.from, 'from', new Date(0)),
+    to: parseDate(query.to, 'to', new Date()),
+    limit: parseLimit(query.limit),
+  };
 }
 
 module.exports = { validateUserDeviceCreate, validateUserDeviceUpdate, validateReadingsQuery };

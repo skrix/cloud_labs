@@ -1,4 +1,3 @@
-// Physical devices of the signed-in user. Every query is scoped to req.user.id.
 const express = require('express');
 const userDevicesService = require('../services/user-devices');
 const readingsService = require('../services/readings');

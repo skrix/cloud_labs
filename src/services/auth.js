@@ -1,11 +1,9 @@
 const { User } = require('../db/models');
-const { UnauthorizedError } = require('../errors');
+const { HttpError } = require('../errors');
 const { hashPassword, verifyPassword } = require('../utils/crypto');
 const { createToken } = require('../utils/jwt');
 
-// Compared against when the email is unknown, so the response time does not reveal which emails exist.
 const DUMMY_PASSWORD_HASH = '$2b$12$A/21UVkRMvRbbN3UfUNwjOEKlQ69XW.4guPhG/hBeVPApj6dbx9FG';
-const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password';
 
 async function signup({ email, password }) {
   const passwordHash = await hashPassword(password);
@@ -18,7 +16,7 @@ async function signin({ email, password }) {
   const isPasswordValid = await verifyPassword(password, passwordHash);
 
   if (!user || !isPasswordValid) {
-    throw new UnauthorizedError(INVALID_CREDENTIALS_MESSAGE);
+    throw new HttpError(401, 'Invalid email or password');
   }
   return createToken(user);
 }

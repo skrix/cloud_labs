@@ -1,4 +1,3 @@
-// Starts the HTTP server and shuts it down cleanly. ECS sends SIGTERM on every deploy.
 const { app } = require('./app');
 const { sequelize } = require('./db');
 const { logger } = require('./utils/logger');
@@ -23,6 +22,5 @@ function shutdown(signal) {
   });
 }
 
-// `once`: a second Ctrl+C kills the process immediately.
 process.once('SIGTERM', () => shutdown('SIGTERM'));
 process.once('SIGINT', () => shutdown('SIGINT'));

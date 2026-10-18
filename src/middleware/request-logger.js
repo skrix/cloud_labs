@@ -1,4 +1,3 @@
-// One log line per request. Bodies, headers and query strings are not logged: they can contain secrets.
 const { logger } = require('../utils/logger');
 
 function requestLogger(req, res, next) {

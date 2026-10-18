@@ -1,9 +1,8 @@
-// Allows only admins. Must run after authenticate, which sets req.user.
-const { ForbiddenError } = require('../errors');
+const { HttpError } = require('../errors');
 
 function requireAdmin(req, res, next) {
   if (req.user.role !== 'admin') {
-    throw new ForbiddenError('Admin role required');
+    throw new HttpError(403, 'Admin role required');
   }
   next();
 }

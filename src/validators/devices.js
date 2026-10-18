@@ -1,30 +1,21 @@
-const {
-  requireObject,
-  requireString,
-  optionalString,
-  nullableString,
-  removeUndefined,
-  requireAtLeastOneField,
-} = require('./helpers');
+const { requireObject, requireString, optionalString, pick } = require('./helpers');
+
+const DEVICE_FIELDS = ['name', 'chip', 'description'];
 
 function validateDeviceCreate(body) {
   requireObject(body);
-  return removeUndefined({
-    name: requireString(body, 'name'),
-    chip: nullableString(body, 'chip'),
-    description: nullableString(body, 'description'),
-  });
+  requireString(body.name, 'name');
+  optionalString(body.chip, 'chip');
+  optionalString(body.description, 'description');
+  return pick(body, DEVICE_FIELDS);
 }
 
 function validateDeviceUpdate(body) {
   requireObject(body);
-  const changes = removeUndefined({
-    name: optionalString(body, 'name'),
-    chip: nullableString(body, 'chip'),
-    description: nullableString(body, 'description'),
-  });
-  requireAtLeastOneField(changes);
-  return changes;
+  optionalString(body.name, 'name');
+  optionalString(body.chip, 'chip');
+  optionalString(body.description, 'description');
+  return pick(body, DEVICE_FIELDS);
 }
 
 module.exports = { validateDeviceCreate, validateDeviceUpdate };

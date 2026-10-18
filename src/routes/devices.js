@@ -1,4 +1,3 @@
-// Device catalog. Every signed-in user can read it; only admins can change it.
 const express = require('express');
 const devicesService = require('../services/devices');
 const { authenticate } = require('../middleware/authenticate');

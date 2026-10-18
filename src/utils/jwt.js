@@ -1,4 +1,3 @@
-// Creates and verifies the JWTs that users send as "Authorization: Bearer <token>".
 const jwt = require('jsonwebtoken');
 
 const TOKEN_TTL = '1h';

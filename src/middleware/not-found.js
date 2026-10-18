@@ -1,8 +1,7 @@
-// Unknown routes get a JSON 404 instead of Express's HTML page.
-const { NotFoundError } = require('../errors');
+const { HttpError } = require('../errors');
 
 function notFound(req, res, next) {
-  next(new NotFoundError('Route not found'));
+  next(new HttpError(404, 'Route not found'));
 }
 
 module.exports = { notFound };

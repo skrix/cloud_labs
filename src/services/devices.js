@@ -1,11 +1,10 @@
-// Device catalog: generic device types (for example "ESP32 DevKit") that admins manage.
 const { Device, Firmware } = require('../db/models');
-const { NotFoundError } = require('../errors');
+const { HttpError } = require('../errors');
 
-async function findDevice(id) {
-  const device = await Device.findByPk(id);
+async function findDevice(id, options = {}) {
+  const device = await Device.findByPk(id, options);
   if (!device) {
-    throw new NotFoundError('Device not found');
+    throw new HttpError(404, 'Device not found');
   }
   return device;
 }
@@ -14,15 +13,8 @@ function listDevices() {
   return Device.findAll({ order: [['createdAt', 'ASC']] });
 }
 
-async function getDevice(id) {
-  const device = await Device.findByPk(id, {
-    include: Firmware,
-    order: [[Firmware, 'createdAt', 'ASC']],
-  });
-  if (!device) {
-    throw new NotFoundError('Device not found');
-  }
-  return device;
+function getDevice(id) {
+  return findDevice(id, { include: Firmware });
 }
 
 function createDevice(fields) {
@@ -34,7 +26,6 @@ async function updateDevice(id, changes) {
   return device.update(changes);
 }
 
-// The database refuses (ON DELETE RESTRICT) while firmwares or user devices refer to it -> 409.
 async function deleteDevice(id) {
   const device = await findDevice(id);
   await device.destroy();

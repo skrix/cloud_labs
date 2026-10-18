@@ -1,4 +1,3 @@
-// Builds the Express app: middleware, routers, 404 and error handler. server.js starts it.
 const fs = require('fs');
 const path = require('path');
 const express = require('express');

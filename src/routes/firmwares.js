@@ -1,4 +1,3 @@
-// Firmwares of catalog devices. Every signed-in user can read them; only admins can change them.
 const express = require('express');
 const firmwaresService = require('../services/firmwares');
 const { authenticate } = require('../middleware/authenticate');
