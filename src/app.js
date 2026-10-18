@@ -1,37 +1,18 @@
+// Builds the Express app: middleware, routers, 404 and error handler. server.js starts it.
 const express = require('express');
-const { sequelize } = require('./db');
+const apiRouter = require('./routes');
+const { requestLogger } = require('./middleware/request-logger');
+const { notFound } = require('./middleware/not-found');
+const { errorHandler } = require('./middleware/error-handler');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-app.get('/api', (req, res) => {
-  res.json({ message: "Hello world!", timestamp: new Date().toISOString() });
-});
+app.use(requestLogger);
+app.use(express.json());
 
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString()
-  });
-});
+app.use('/api', apiRouter);
 
-app.get('/api/health/db', async (req, res) => {
-  try {
-    await sequelize.authenticate();
-    res.json({
-      status: 'ok',
-      timestamp: new Date().toISOString()
-    });
-  } catch (err) {
-    console.error('db check failed:', err.message);
+app.use(notFound);
+app.use(errorHandler);
 
-    res.status(503).json({
-      status: 'error',
-      timestamp: new Date().toISOString()
-    });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`iot-hub listening on port ${PORT}`);
-});
+module.exports = { app };
