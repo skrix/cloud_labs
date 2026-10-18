@@ -1,4 +1,5 @@
 const { Op } = require('sequelize');
+const { sequelize } = require('../db');
 const { UserDevice, Reading } = require('../db/models');
 const { HttpError } = require('../errors');
 const { hashApiKey } = require('../utils/crypto');
@@ -26,9 +27,11 @@ async function listReadings(userId, userDeviceId, { from, to, limit }) {
 
 async function ingestReading(apiKey, data) {
   const userDevice = await findUserDeviceByApiKey(apiKey);
-  const reading = await Reading.create({ userDeviceId: userDevice.id, data });
-  await userDevice.update({ lastSeenAt: reading.createdAt });
-  return reading;
+  return sequelize.transaction(async (transaction) => {
+    const reading = await Reading.create({ userDeviceId: userDevice.id, data }, { transaction });
+    await userDevice.update({ lastSeenAt: reading.createdAt }, { transaction });
+    return reading;
+  });
 }
 
 module.exports = { listReadings, ingestReading };

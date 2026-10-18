@@ -2,7 +2,7 @@ const express = require('express');
 const userDevicesService = require('../services/user-devices');
 const readingsService = require('../services/readings');
 const { authenticate } = require('../middleware/authenticate');
-const { validateId } = require('../validators/helpers');
+const { validateIdParam } = require('../middleware/validate-id');
 const {
   validateUserDeviceCreate,
   validateUserDeviceUpdate,
@@ -12,6 +12,7 @@ const {
 const router = express.Router();
 
 router.use(authenticate);
+router.param('id', validateIdParam);
 
 router.get('/', async (req, res) => {
   const userDevices = await userDevicesService.listUserDevices(req.user.id);
@@ -19,8 +20,7 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/:id', async (req, res) => {
-  const id = validateId(req.params.id);
-  const userDevice = await userDevicesService.getUserDevice(req.user.id, id);
+  const userDevice = await userDevicesService.getUserDevice(req.user.id, req.params.id);
   res.json(userDevice);
 });
 
@@ -31,28 +31,24 @@ router.post('/', async (req, res) => {
 });
 
 router.patch('/:id', async (req, res) => {
-  const id = validateId(req.params.id);
   const changes = validateUserDeviceUpdate(req.body);
-  const userDevice = await userDevicesService.updateUserDevice(req.user.id, id, changes);
+  const userDevice = await userDevicesService.updateUserDevice(req.user.id, req.params.id, changes);
   res.json(userDevice);
 });
 
 router.delete('/:id', async (req, res) => {
-  const id = validateId(req.params.id);
-  await userDevicesService.deleteUserDevice(req.user.id, id);
+  await userDevicesService.deleteUserDevice(req.user.id, req.params.id);
   res.status(204).end();
 });
 
 router.post('/:id/rotate-key', async (req, res) => {
-  const id = validateId(req.params.id);
-  const result = await userDevicesService.rotateApiKey(req.user.id, id);
+  const result = await userDevicesService.rotateApiKey(req.user.id, req.params.id);
   res.json(result);
 });
 
 router.get('/:id/readings', async (req, res) => {
-  const id = validateId(req.params.id);
   const query = validateReadingsQuery(req.query);
-  const readings = await readingsService.listReadings(req.user.id, id, query);
+  const readings = await readingsService.listReadings(req.user.id, req.params.id, query);
   res.json(readings);
 });
 

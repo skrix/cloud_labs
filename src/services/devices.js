@@ -1,4 +1,4 @@
-const { Device, Firmware } = require('../db/models');
+const { Device, Firmware, UserDevice } = require('../db/models');
 const { HttpError } = require('../errors');
 
 async function findDevice(id, options = {}) {
@@ -26,8 +26,17 @@ async function updateDevice(id, changes) {
   return device.update(changes);
 }
 
+async function isDeviceInUse(deviceId) {
+  const firmwareCount = await Firmware.count({ where: { deviceId } });
+  const userDeviceCount = await UserDevice.count({ where: { deviceId } });
+  return firmwareCount > 0 || userDeviceCount > 0;
+}
+
 async function deleteDevice(id) {
   const device = await findDevice(id);
+  if (await isDeviceInUse(id)) {
+    throw new HttpError(409, 'Device is still used by firmwares or user devices');
+  }
   await device.destroy();
 }
 

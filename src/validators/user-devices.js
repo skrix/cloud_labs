@@ -3,6 +3,7 @@ const { requireObject, requireString, optionalString, requireUuid, optionalUuid,
 
 const DEFAULT_READINGS_LIMIT = 100;
 const MAX_READINGS_LIMIT = 1000;
+const DEFAULT_READINGS_PERIOD_MS = 7 * 24 * 60 * 60 * 1000;
 
 function validateUserDeviceCreate(body) {
   requireObject(body);
@@ -43,7 +44,7 @@ function parseLimit(value) {
 
 function validateReadingsQuery(query) {
   return {
-    from: parseDate(query.from, 'from', new Date(0)),
+    from: parseDate(query.from, 'from', new Date(Date.now() - DEFAULT_READINGS_PERIOD_MS)),
     to: parseDate(query.to, 'to', new Date()),
     limit: parseLimit(query.limit),
   };

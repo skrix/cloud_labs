@@ -2,7 +2,7 @@ const express = require('express');
 const firmwaresService = require('../services/firmwares');
 const { authenticate } = require('../middleware/authenticate');
 const { requireAdmin } = require('../middleware/require-admin');
-const { validateId } = require('../validators/helpers');
+const { validateIdParam } = require('../middleware/validate-id');
 const {
   validateFirmwareFilter,
   validateFirmwareCreate,
@@ -12,6 +12,7 @@ const {
 const router = express.Router();
 
 router.use(authenticate);
+router.param('id', validateIdParam);
 
 router.get('/', async (req, res) => {
   const filter = validateFirmwareFilter(req.query);
@@ -20,8 +21,7 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/:id', async (req, res) => {
-  const id = validateId(req.params.id);
-  const firmware = await firmwaresService.getFirmware(id);
+  const firmware = await firmwaresService.getFirmware(req.params.id);
   res.json(firmware);
 });
 
@@ -32,15 +32,13 @@ router.post('/', requireAdmin, async (req, res) => {
 });
 
 router.patch('/:id', requireAdmin, async (req, res) => {
-  const id = validateId(req.params.id);
   const changes = validateFirmwareUpdate(req.body);
-  const firmware = await firmwaresService.updateFirmware(id, changes);
+  const firmware = await firmwaresService.updateFirmware(req.params.id, changes);
   res.json(firmware);
 });
 
 router.delete('/:id', requireAdmin, async (req, res) => {
-  const id = validateId(req.params.id);
-  await firmwaresService.deleteFirmware(id);
+  await firmwaresService.deleteFirmware(req.params.id);
   res.status(204).end();
 });
 

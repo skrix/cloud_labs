@@ -358,11 +358,11 @@ paths:
       parameters:
         - name: from
           in: query
-          description: Only readings created at or after this time
+          description: Only readings created at or after this time. Default 7 days ago.
           schema: { type: string, format: date-time }
         - name: to
           in: query
-          description: Only readings created at or before this time
+          description: Only readings created at or before this time. Default now.
           schema: { type: string, format: date-time }
         - name: limit
           in: query

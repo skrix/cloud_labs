@@ -40,11 +40,6 @@ function optionalUuid(value, field) {
   }
 }
 
-function validateId(id) {
-  requireUuid(id, 'id');
-  return id;
-}
-
 function pick(body, fields) {
   const result = {};
   for (const field of fields) {
@@ -62,6 +57,5 @@ module.exports = {
   optionalString,
   requireUuid,
   optionalUuid,
-  validateId,
   pick,
 };

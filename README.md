@@ -14,14 +14,12 @@ npm run dev            # restarts on file changes; use `npm start` in production
 - API: http://localhost:3000/api
 - Swagger UI: http://localhost:3000/docs (spec in `api/openapi.yaml`)
 
-Smoke test (signs up, signs in, and calls every endpoint once):
+Lint and tests:
 
 ```sh
-scripts/smoke-test.sh                        # default http://localhost:3000
-scripts/smoke-test.sh http://localhost:3100  # other base URL
+npm run lint
+npm test     # node:test; no database needed
 ```
-
-It needs `curl`, `jq` and the `PG*` variables, because it promotes its test admin directly in the database.
 
 ## Environment variables
 
@@ -82,7 +80,7 @@ Errors always look like `{ "error": "message" }`.
 | PATCH  | `/user-devices/:id`                 | auth   | `name`, `firmwareId`                              |
 | DELETE | `/user-devices/:id`                 | auth   | Also deletes its readings                         |
 | POST   | `/user-devices/:id/rotate-key`      | auth   | Returns `{ userDevice, apiKey }`                  |
-| GET    | `/user-devices/:id/readings`        | auth   | `?from=&to=&limit=` (ISO dates, limit 1–1000, default 100), newest first |
+| GET    | `/user-devices/:id/readings`        | auth   | `?from=&to=&limit=` (ISO dates, default last 7 days; limit 1–1000, default 100), newest first |
 | POST   | `/ingest`                           | device key | Header `X-Device-Key`, body is any JSON object |
 
 Notes:
@@ -109,11 +107,11 @@ src/
   db.js           the one Sequelize instance
   errors.js       HttpError(status, message)
   db/             config, models, migrations
-  middleware/     authenticate, require-admin, error-handler, not-found, request-logger
+  middleware/     authenticate, require-admin, validate-id, error-handler, not-found, request-logger
   routes/         one router per resource: validate → call service → respond
   validators/     one file per resource; throw HttpError(400) and return allowed fields only
   services/       business logic and database access
   utils/          crypto, jwt, logger
 api/openapi.yaml  OpenAPI 3 spec served at /docs
-scripts/          smoke-test.sh
+test/             unit tests (validators, utils, middleware) and HTTP tests without a database
 ```
