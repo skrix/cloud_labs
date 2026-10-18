@@ -9,6 +9,11 @@ const base = {
 
 module.exports = {
   development: base,
+  test: {
+    ...base,
+    database: `${base.database}_test`,
+    logging: false,
+  },
   production: {
     ...base,
     logging: false,

@@ -19,7 +19,8 @@ API docs: http://localhost:3000/docs
 | `npm run db:migrate[:undo]`   | Run / undo migrations     |
 | `npm run db:seed[:undo]`      | Add / remove demo data    |
 | `npm run lint`                | ESLint                    |
-| `npm test`                    | Tests (no database)       |
+| `npm run db:test:create`      | Create the test database (once) |
+| `npm test`                    | Migrate the test database and run tests |
 
 ## Environment
 

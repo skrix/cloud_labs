@@ -9,9 +9,11 @@
     "db:migrate": "sequelize-cli db:migrate",
     "db:migrate:undo": "sequelize-cli db:migrate:undo",
     "lint": "eslint .",
-    "test": "JWT_SECRET=test-secret node --test \"test/**/*.test.js\"",
     "db:seed": "sequelize-cli db:seed:all",
-    "db:seed:undo": "sequelize-cli db:seed:undo:all"
+    "db:seed:undo": "sequelize-cli db:seed:undo:all",
+    "db:test:create": "NODE_ENV=test sequelize-cli db:create",
+    "pretest": "NODE_ENV=test sequelize-cli db:migrate",
+    "test": "NODE_ENV=test JWT_SECRET=test-secret node --test --test-concurrency=1 \"test/**/*.test.js\""
   },
   "repository": {
     "type": "git",
