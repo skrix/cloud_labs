@@ -7,7 +7,6 @@ const DEFAULT_PORT = 3000;
 const PORT = Number(process.env.PORT) || DEFAULT_PORT;
 
 const server = app.listen(PORT, (error) => {
-  // Express 5 passes listen errors (for example "port in use") here; crash so the problem is visible.
   if (error) {
     throw error;
   }
@@ -17,7 +16,6 @@ const server = app.listen(PORT, (error) => {
 function shutdown(signal) {
   logger.info('shutdown started', { signal });
 
-  // close() stops new connections and waits for running requests to finish.
   server.close(async () => {
     await sequelize.close();
     logger.info('shutdown complete');
@@ -25,6 +23,6 @@ function shutdown(signal) {
   });
 }
 
-// `once`: a second Ctrl+C falls back to Node's default behavior and kills the process at once.
+// `once`: a second Ctrl+C kills the process immediately.
 process.once('SIGTERM', () => shutdown('SIGTERM'));
 process.once('SIGINT', () => shutdown('SIGINT'));

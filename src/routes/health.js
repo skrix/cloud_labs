@@ -1,5 +1,5 @@
-// Health endpoints. GET /health must not touch the database: the load balancer calls it,
-// and a slow database should not make ECS replace healthy containers.
+// GET /health skips the database: the load balancer calls it, and a slow database
+// should not make ECS replace healthy containers.
 const express = require('express');
 const healthService = require('../services/health');
 

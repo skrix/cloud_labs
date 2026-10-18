@@ -1,5 +1,4 @@
-// Logs one line per finished request: method, path, status and duration.
-// Bodies, headers and query strings are never logged because they can contain passwords, tokens or keys.
+// One log line per request. Bodies, headers and query strings are not logged: they can contain secrets.
 const { logger } = require('../utils/logger');
 
 function requestLogger(req, res, next) {

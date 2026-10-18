@@ -8,12 +8,23 @@ const SEQUELIZE_ERROR_STATUS = {
   SequelizeForeignKeyConstraintError: 409,
 };
 
+// PostgreSQL reports ON DELETE RESTRICT as "restrict_violation" (23001). Sequelize only maps
+// 23503 to ForeignKeyConstraintError, so a RESTRICT failure arrives as a plain DatabaseError.
+const RESTRICT_VIOLATION_CODE = '23001';
+
 const FOREIGN_KEY_MESSAGE = 'The resource is referenced by other records';
 const INTERNAL_ERROR_MESSAGE = 'Internal server error';
+
+function isRestrictViolation(err) {
+  return err.name === 'SequelizeDatabaseError' && err.parent?.code === RESTRICT_VIOLATION_CODE;
+}
 
 function describeSequelizeError(err) {
   if (err.name === 'SequelizeForeignKeyConstraintError') {
     return FOREIGN_KEY_MESSAGE;
+  }
+  if (err.name === 'SequelizeUniqueConstraintError') {
+    return `${Object.keys(err.fields).join(' and ')} must be unique`;
   }
   return err.errors.map((item) => item.message).join('; ');
 }
@@ -29,13 +40,16 @@ function errorHandler(err, req, res, next) {
     return res.status(sequelizeStatus).json({ error: describeSequelizeError(err) });
   }
 
-  // Errors from Express itself (for example malformed JSON or a too large body) follow the
-  // http-errors convention: `expose` marks messages that are safe to show to the client.
+  if (isRestrictViolation(err)) {
+    return res.status(409).json({ error: FOREIGN_KEY_MESSAGE });
+  }
+
+  // Express's own errors (malformed JSON, body too large) mark client-safe messages with `expose`.
   if (err.expose && err.status < 500) {
     return res.status(err.status).json({ error: err.message });
   }
 
-  // Only message and stack: the full error object can contain SQL with user data.
+  // Not the whole error object: it can contain SQL with user data.
   logger.error('unhandled error', { error: err.message, stack: err.stack });
   res.status(500).json({ error: INTERNAL_ERROR_MESSAGE });
 }

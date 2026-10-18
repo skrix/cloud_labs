@@ -1,4 +1,3 @@
-// Password hashing and device API keys.
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 
@@ -17,8 +16,8 @@ function generateApiKey() {
   return crypto.randomBytes(API_KEY_BYTES).toString('hex');
 }
 
-// SHA-256 instead of bcrypt: the key is 32 random bytes, so it cannot be guessed and needs no slow hash.
-// An unsalted hash is also deterministic, which lets ingest find the device by the hash (unique index).
+// SHA-256, not bcrypt: a 32-byte random key needs no slow hash, and a deterministic
+// hash lets ingest look the device up by apiKeyHash.
 function hashApiKey(apiKey) {
   return crypto.createHash('sha256').update(apiKey).digest('hex');
 }

@@ -1,4 +1,3 @@
-// Health checks used by the load balancer and by operators.
 const { sequelize } = require('../db');
 const { logger } = require('../utils/logger');
 

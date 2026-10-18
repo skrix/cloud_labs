@@ -1,4 +1,3 @@
-// Public endpoints to create an account and get a JWT.
 const express = require('express');
 const authService = require('../services/auth');
 const { validateCredentials, validateSignup } = require('../validators/auth');

@@ -1,4 +1,4 @@
-// Structured logger: one JSON object per line on stdout, so CloudWatch can parse and filter it.
+// One JSON object per line on stdout, so CloudWatch can parse and filter it.
 
 function write(level, message, fields) {
   const entry = {

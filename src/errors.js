@@ -1,5 +1,4 @@
-// Error classes that carry an HTTP status. Services and validators throw them,
-// and the central error handler turns them into responses.
+// Errors with an HTTP status, turned into responses by the central error handler.
 
 class HttpError extends Error {
   constructor(status, message) {
@@ -9,7 +8,6 @@ class HttpError extends Error {
   }
 }
 
-// Named subclasses let services say WHAT went wrong without knowing status codes.
 class BadRequestError extends HttpError {
   constructor(message) {
     super(400, message);

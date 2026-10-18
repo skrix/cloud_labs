@@ -1,5 +1,4 @@
-// Small building blocks shared by the resource validators.
-// Each helper reads one field, throws BadRequestError if it is invalid, and returns the clean value.
+// Field checks shared by the resource validators. Each one throws BadRequestError or returns the value.
 const { BadRequestError } = require('../errors');
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -26,7 +25,6 @@ function requireString(body, field) {
   return value;
 }
 
-// For fields that are optional in the request but cannot be empty or null in the database.
 function optionalString(body, field) {
   if (body[field] === undefined) {
     return undefined;
@@ -34,7 +32,6 @@ function optionalString(body, field) {
   return requireString(body, field);
 }
 
-// For optional columns: null clears the value.
 function nullableString(body, field) {
   const value = body[field];
   if (value === undefined || value === null) {
@@ -69,7 +66,7 @@ function nullableUuid(body, field) {
   return requireUuid(body, field);
 }
 
-// Route parameters are checked before the query, otherwise PostgreSQL rejects a non-UUID with a 500.
+// Without this check PostgreSQL rejects a non-UUID id and the client gets a 500.
 function validateId(id) {
   if (!isUuid(id)) {
     throw new BadRequestError('id must be a UUID');
@@ -77,7 +74,7 @@ function validateId(id) {
   return id;
 }
 
-// Fields the client did not send stay out of the result, so an update does not touch them.
+// Fields the client did not send must not be touched by an update.
 function removeUndefined(fields) {
   const result = {};
   for (const [key, value] of Object.entries(fields)) {

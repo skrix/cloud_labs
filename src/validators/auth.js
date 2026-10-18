@@ -1,4 +1,3 @@
-// Input validation for sign-up and sign-in.
 const { BadRequestError } = require('../errors');
 const { requireObject, requireString } = require('./helpers');
 
@@ -13,8 +12,8 @@ function validateCredentials(body) {
   };
 }
 
-// The length rule is only checked on sign-up: sign-in must keep working if the rule changes later.
-// Any `role` in the body is dropped here, so nobody can sign up as admin.
+// Length is checked only on sign-up so old passwords keep working if the rule changes.
+// `role` is not returned, so nobody can sign up as admin.
 function validateSignup(body) {
   const credentials = validateCredentials(body);
   if (credentials.password.length < MIN_PASSWORD_LENGTH) {
