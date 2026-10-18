@@ -11,6 +11,7 @@ services:
       PGUSER: postgres
       PGPASSWORD: postgres
       PGDATABASE: iot_hub
+      JWT_SECRET: 3a490895fb245002bc0aefbdb870b61c81df4b8b131402ff42d56c3309752021
     depends_on:
       - db
 
