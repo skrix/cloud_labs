@@ -43,6 +43,24 @@ npm run db:migrate
 npm run db:migrate:undo   # roll back the last one
 ```
 
+## Demo data
+
+```sh
+npm run db:seed        # safe to run again; readings are recreated relative to now
+npm run db:seed:undo   # removes the demo users, devices and firmwares
+```
+
+Refuses to run with `NODE_ENV=production`.
+
+| Email               | Password     | Role  | Devices (API key)                                       |
+|---------------------|--------------|-------|---------------------------------------------------------|
+| `admin@example.com` | `admin12345` | admin | none                                                    |
+| `alice@example.com` | `alice12345` | user  | Kitchen sensor (`demo-key-kitchen`), Balcony sensor (`demo-key-balcony`) |
+| `bob@example.com`   | `bob12345`   | user  | Garage sensor (`demo-key-garage`)                       |
+
+Catalog: ESP32 DevKitC (firmwares 1.0.0, 1.1.0), ESP32-S3 DevKit (2.0.0), ESP32-C3 SuperMini (no firmwares,
+so it can be deleted). Each user device has hourly readings for the last 72 hours.
+
 ## Promote a user to admin
 
 There is no API to create an admin. Sign up normally, then run:
@@ -106,7 +124,7 @@ src/
   server.js       starts the server, graceful shutdown on SIGTERM / SIGINT
   db.js           the one Sequelize instance
   errors.js       HttpError(status, message)
-  db/             config, models, migrations
+  db/             config, models, migrations, seeders
   middleware/     authenticate, require-admin, validate-id, error-handler, not-found, request-logger
   routes/         one router per resource: validate → call service → respond
   validators/     one file per resource; throw HttpError(400) and return allowed fields only

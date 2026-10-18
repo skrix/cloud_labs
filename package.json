@@ -9,7 +9,9 @@
     "db:migrate": "sequelize-cli db:migrate",
     "db:migrate:undo": "sequelize-cli db:migrate:undo",
     "lint": "eslint .",
-    "test": "JWT_SECRET=test-secret node --test \"test/**/*.test.js\""
+    "test": "JWT_SECRET=test-secret node --test \"test/**/*.test.js\"",
+    "db:seed": "sequelize-cli db:seed:all",
+    "db:seed:undo": "sequelize-cli db:seed:undo:all"
   },
   "repository": {
     "type": "git",
