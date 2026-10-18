@@ -1,0 +1,609 @@
+openapi: 3.0.3
+info:
+  title: IoT Hub API
+  version: 1.0.0
+  description: |
+    Users register ESP32 devices and collect sensor data.
+
+    Most endpoints need a JWT from `POST /api/auth/signin` (button "Authorize" → bearerAuth).
+    Devices send readings with their API key in the `X-Device-Key` header.
+servers:
+  - url: /api
+
+tags:
+  - name: Health
+  - name: Auth
+  - name: Devices
+    description: Catalog of device types. Read for every user, write for admins.
+  - name: Firmwares
+    description: Firmware versions of catalog devices. Read for every user, write for admins.
+  - name: User devices
+    description: Physical devices owned by the caller. Devices of other users return 404.
+  - name: Readings
+
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Liveness check (no database)
+      security: []
+      responses:
+        '200':
+          description: The process is up
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HealthStatus' }
+
+  /health/db:
+    get:
+      tags: [Health]
+      summary: Database connectivity check
+      security: []
+      responses:
+        '200':
+          description: The database is reachable
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HealthStatus' }
+        '503':
+          description: The database is not reachable
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HealthStatus' }
+
+  /auth/signup:
+    post:
+      tags: [Auth]
+      summary: Create an account (always with role "user")
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Credentials' }
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /auth/signin:
+    post:
+      tags: [Auth]
+      summary: Get a JWT (valid for 1 hour)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Credentials' }
+      responses:
+        '200':
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token]
+                properties:
+                  token: { type: string }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /devices:
+    get:
+      tags: [Devices]
+      summary: List catalog devices
+      responses:
+        '200':
+          description: All catalog devices
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Device' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [Devices]
+      summary: Create a catalog device (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DeviceCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Device' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /devices/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Devices]
+      summary: Get a catalog device with its firmwares
+      responses:
+        '200':
+          description: The device
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeviceWithFirmwares' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Devices]
+      summary: Update a catalog device (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DeviceUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Device' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [Devices]
+      summary: Delete a catalog device (admin)
+      description: Fails with 409 while firmwares or user devices refer to the device.
+      responses:
+        '204': { description: Deleted }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /firmwares:
+    get:
+      tags: [Firmwares]
+      summary: List firmwares
+      parameters:
+        - name: deviceId
+          in: query
+          required: false
+          description: Only firmwares of this catalog device
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Firmwares
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Firmware' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [Firmwares]
+      summary: Create a firmware (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FirmwareCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Firmware' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /firmwares/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Firmwares]
+      summary: Get a firmware
+      responses:
+        '200':
+          description: The firmware
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Firmware' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Firmwares]
+      summary: Update a firmware (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FirmwareUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Firmware' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [Firmwares]
+      summary: Delete a firmware (admin)
+      description: User devices running this firmware get firmwareId = null.
+      responses:
+        '204': { description: Deleted }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /user-devices:
+    get:
+      tags: [User devices]
+      summary: List the caller's devices
+      responses:
+        '200':
+          description: The caller's devices
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/UserDevice' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [User devices]
+      summary: Register a physical device
+      description: The response contains the plain API key. It is shown only once.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserDeviceCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserDeviceWithApiKey' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /user-devices/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [User devices]
+      summary: Get one of the caller's devices with its Device and Firmware
+      responses:
+        '200':
+          description: The device
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserDeviceDetails' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [User devices]
+      summary: Rename a device or change its firmware
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserDeviceUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserDevice' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [User devices]
+      summary: Delete a device and its readings
+      responses:
+        '204': { description: Deleted }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /user-devices/{id}/rotate-key:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [User devices]
+      summary: Replace the API key
+      description: The old key stops working at once. The new key is shown only once.
+      responses:
+        '200':
+          description: New key
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserDeviceWithApiKey' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /user-devices/{id}/readings:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Readings]
+      summary: List readings of one of the caller's devices, newest first
+      parameters:
+        - name: from
+          in: query
+          description: Only readings created at or after this time
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          description: Only readings created at or before this time
+          schema: { type: string, format: date-time }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 1000, default: 100 }
+      responses:
+        '200':
+          description: Readings
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Reading' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /ingest:
+    post:
+      tags: [Readings]
+      summary: Store a reading sent by a device
+      security:
+        - deviceKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              example: { temperature: 21.5, humidity: 40 }
+      responses:
+        '201':
+          description: Stored
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reading' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    deviceKey:
+      type: apiKey
+      in: header
+      name: X-Device-Key
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    BadRequest:
+      description: Invalid input
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Missing or invalid credentials
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: Admin role required
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Not found (or owned by another user)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: Duplicate value, or the resource is still referenced
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+
+    HealthStatus:
+      type: object
+      properties:
+        status: { type: string, enum: [ok, error] }
+        timestamp: { type: string, format: date-time }
+
+    Timestamps:
+      type: object
+      properties:
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    Credentials:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8, description: At least 8 characters on sign-up }
+
+    User:
+      allOf:
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            email: { type: string, format: email }
+            role: { type: string, enum: [user, admin] }
+        - $ref: '#/components/schemas/Timestamps'
+
+    DeviceCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        chip: { type: string, nullable: true }
+        description: { type: string, nullable: true }
+
+    DeviceUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        name: { type: string }
+        chip: { type: string, nullable: true }
+        description: { type: string, nullable: true }
+
+    Device:
+      allOf:
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+            chip: { type: string, nullable: true }
+            description: { type: string, nullable: true }
+        - $ref: '#/components/schemas/Timestamps'
+
+    DeviceWithFirmwares:
+      allOf:
+        - $ref: '#/components/schemas/Device'
+        - type: object
+          properties:
+            Firmwares:
+              type: array
+              items: { $ref: '#/components/schemas/Firmware' }
+
+    FirmwareCreate:
+      type: object
+      required: [deviceId, version]
+      properties:
+        deviceId: { type: string, format: uuid }
+        version: { type: string }
+        releaseNotes: { type: string, nullable: true }
+
+    FirmwareUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        version: { type: string }
+        releaseNotes: { type: string, nullable: true }
+
+    Firmware:
+      allOf:
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            deviceId: { type: string, format: uuid }
+            version: { type: string }
+            releaseNotes: { type: string, nullable: true }
+        - $ref: '#/components/schemas/Timestamps'
+
+    UserDeviceCreate:
+      type: object
+      required: [name, deviceId]
+      properties:
+        name: { type: string }
+        deviceId: { type: string, format: uuid }
+        firmwareId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Must be a firmware of the same deviceId
+
+    UserDeviceUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        name: { type: string }
+        firmwareId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Must be a firmware of the device; null removes it
+
+    UserDevice:
+      allOf:
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            userId: { type: string, format: uuid }
+            deviceId: { type: string, format: uuid }
+            firmwareId: { type: string, format: uuid, nullable: true }
+            name: { type: string }
+            lastSeenAt: { type: string, format: date-time, nullable: true }
+        - $ref: '#/components/schemas/Timestamps'
+
+    UserDeviceDetails:
+      allOf:
+        - $ref: '#/components/schemas/UserDevice'
+        - type: object
+          properties:
+            Device: { $ref: '#/components/schemas/Device' }
+            Firmware:
+              allOf:
+                - $ref: '#/components/schemas/Firmware'
+              nullable: true
+
+    UserDeviceWithApiKey:
+      type: object
+      required: [userDevice, apiKey]
+      properties:
+        userDevice: { $ref: '#/components/schemas/UserDevice' }
+        apiKey:
+          type: string
+          description: 64 hex characters. Shown only once; the server stores only its SHA-256 hash.
+
+    Reading:
+      allOf:
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            userDeviceId: { type: string, format: uuid }
+            data:
+              type: object
+              additionalProperties: true
+        - $ref: '#/components/schemas/Timestamps'
