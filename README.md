@@ -2,6 +2,11 @@
 
 REST API for registering ESP32 devices and collecting sensor readings.
 
+URL:
+http://iot-hub-alb-2082221416.eu-north-1.elb.amazonaws.com
+
+(API docs at `/docs`).
+
 ## Run
 
 ```sh
