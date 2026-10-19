@@ -7,7 +7,7 @@ REST API for registering ESP32 devices and collecting sensor readings.
 ```sh
 npm install
 npm run db:migrate
-npm run db:seed    # optional demo data
+npm run db:seed
 npm run dev
 ```
 
@@ -24,7 +24,16 @@ API docs: http://localhost:3000/docs
 
 ## Environment
 
-`PGHOST`, `PGPORT` (5432), `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `JWT_SECRET`, `PORT` (3000), `NODE_ENV`.
+```
+PGHOST
+PGPORT # 5432
+PGUSER
+PGPASSWORD
+PGDATABASE
+JWT_SECRET
+PORT # 3000
+NODE_ENV
+```
 
 ## Demo users
 
@@ -57,3 +66,20 @@ All under `/api`.
 | `POST /user-devices/:id/rotate-key`               | owner          |
 | `GET /user-devices/:id/readings?from=&to=&limit=` | owner          |
 | `POST /ingest`                                    | `X-Device-Key` |
+
+## Structure
+
+```
+src/
+  app.js, server.js   Express app / HTTP server with graceful shutdown
+  routes/             one router per resource
+  validators/         request validation
+  services/           business logic
+  middleware/         auth, errors, logging
+  db/                 config, models, migrations, seeders
+  utils/              crypto, jwt, logger
+api/openapi.yaml      OpenAPI spec for /docs
+test/                 unit and API tests
+Dockerfile
+compose.yaml
+```
