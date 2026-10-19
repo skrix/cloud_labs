@@ -8,7 +8,7 @@ resource "aws_db_instance" "main" {
   engine                  = "postgres"
   engine_version          = "18.6"
   instance_class          = "db.t4g.micro"
-  allocated_storage       = 10
+  allocated_storage       = 20
   storage_type            = "gp3"
   db_name                 = "iot_hub"
   username                = "iot_hub"

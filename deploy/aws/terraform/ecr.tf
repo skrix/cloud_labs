@@ -24,7 +24,6 @@ resource "terraform_data" "image" {
   provisioner "local-exec" {
     working_dir = "${path.module}/${var.app_path}"
     command     = <<-EOT
-      set -e
       aws ecr get-login-password --region ${var.region} | docker login --username AWS --password-stdin ${split("/", aws_ecr_repository.api.repository_url)[0]}
       docker build --platform linux/amd64 -t ${aws_ecr_repository.api.repository_url}:${var.image_tag} .
       docker push ${aws_ecr_repository.api.repository_url}:${var.image_tag}
