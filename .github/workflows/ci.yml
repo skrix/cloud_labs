@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v6
+
+      - name: docker build
+        run: docker build .
+
+  check:
+    runs-on: ubuntu-24.04
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: ci-test-user
+          POSTGRES_PASSWORD: ci-test-password
+          POSTGRES_DB: iot_hub_test
+        ports:
+          - 5432:5432
+
+    env:
+      PGHOST: localhost
+      PGUSER: ci-test-user
+      PGPASSWORD: ci-test-password
+      PGDATABASE: iot_hub_test
+      JWT_SECRET: ci-test-secret
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v6
+
+      - name: setup
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.21.0'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test

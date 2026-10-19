@@ -1,0 +1,41 @@
+x-app-environment: &app-environment
+  NODE_ENV: development
+  PGHOST: db
+  PGUSER: postgres
+  PGPASSWORD: ${POSTGRES_PASSWORD}
+  PGDATABASE: iot_hub
+  JWT_SECRET: ${JWT_SECRET}
+
+services:
+  app:
+    build: .
+    environment: *app-environment
+    ports:
+      - "3000:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  migrate:
+    build: .
+    command: ["npm", "run", "db:migrate"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:18.6
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: iot_hub
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "iot_hub"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  db-data:
