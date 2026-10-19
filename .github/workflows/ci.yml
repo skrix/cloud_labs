@@ -21,6 +21,24 @@ jobs:
 
   check:
     runs-on: ubuntu-24.04
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: ci-test-user
+          POSTGRES_PASSWORD: ci-test-password
+          POSTGRES_DB: iot_hub_test
+        ports:
+          - 5432:5432
+
+    env:
+      PGHOST: localhost
+      PGUSER: ci-test-user
+      PGPASSWORD: ci-test-password
+      PGDATABASE: iot_hub_test
+      JWT_SECRET: ci-test-secret
+
     steps:
       - name: checkout
         uses: actions/checkout@v6
