@@ -9,8 +9,7 @@ variable "project" {
 }
 
 variable "github_repo" {
-  type    = string
-  default = ""
+  type = string
 }
 
 variable "budget_email" {
@@ -20,4 +19,9 @@ variable "budget_email" {
 variable "app_path" {
   type    = string
   default = "../../.."
+}
+
+variable "image_tag" {
+  type    = string
+  default = "latest"
 }

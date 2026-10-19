@@ -1,0 +1,24 @@
+resource "aws_db_subnet_group" "main" {
+  name       = var.project
+  subnet_ids = aws_subnet.private[*].id
+}
+
+resource "aws_db_instance" "main" {
+  identifier              = var.project
+  engine                  = "postgres"
+  engine_version          = "18.6"
+  instance_class          = "db.t4g.micro"
+  allocated_storage       = 10
+  storage_type            = "gp3"
+  db_name                 = "iot_hub"
+  username                = "iot_hub"
+  password                = aws_ssm_parameter.db_password.value
+  db_subnet_group_name    = aws_db_subnet_group.main.name
+  vpc_security_group_ids  = [aws_security_group.db.id]
+  publicly_accessible     = false
+  multi_az                = false
+  backup_retention_period = 1
+  skip_final_snapshot     = true
+  deletion_protection     = false
+  apply_immediately       = true
+}

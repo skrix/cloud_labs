@@ -1,4 +1,4 @@
 region       = "eu-central-1"
-project      = "notes"
+project      = "iot-hub"
 budget_email = "you@example.com"
-github_repo  = "your-org/notes-api"
+github_repo  = "your-org/your-repo"
