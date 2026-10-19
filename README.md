@@ -67,6 +67,24 @@ All under `/api`.
 | `GET /user-devices/:id/readings?from=&to=&limit=` | owner          |
 | `POST /ingest`                                    | `X-Device-Key` |
 
+## Deploy to AWS
+
+```sh
+cd deploy/aws/terraform
+cp terraform.tfvars.example terraform.tfvars  # set budget_email, github_repo
+terraform init
+terraform apply                               # also builds and pushes the image
+terraform output url
+```
+
+| Variable       | Default        | Description                             |
+|----------------|----------------|-----------------------------------------|
+| `region`       | `eu-central-1` | AWS region                              |
+| `project`      | `iot-hub`      | Name prefix for resources               |
+| `github_repo`  |                | `owner/repo` allowed to deploy          |
+| `budget_email` |                | Budget alert recipient                  |
+| `image_tag`    | `latest`       | Image tag built and run by Terraform    |
+
 ## Structure
 
 ```
@@ -80,6 +98,8 @@ src/
   utils/              crypto, jwt, logger
 api/openapi.yaml      OpenAPI spec for /docs
 test/                 unit and API tests
+deploy/aws/terraform/ AWS infrastructure
+.github/workflows/    CI and CD
 Dockerfile
 compose.yaml
 ```
