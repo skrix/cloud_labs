@@ -106,5 +106,10 @@ resource "aws_ecs_service" "api" {
     rollback = true
   }
 
+  # CD registers new task definition revisions; don't roll them back on apply
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
+
   depends_on = [aws_lb_listener.http, aws_iam_role_policy_attachment.ecs_execution]
 }

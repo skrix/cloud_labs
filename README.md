@@ -100,13 +100,14 @@ terraform output url
 
 Set these GitHub repository variables from `terraform output`:
 
-| Variable         | Value                  |
-|------------------|------------------------|
-| `AWS_ROLE_ARN`   | `github_role_arn`      |
-| `AWS_REGION`     | Terraform `region`     |
-| `ECR_REPOSITORY` | `ecr_repository`       |
-| `ECS_CLUSTER`    | `ecs_cluster`          |
-| `ECS_SERVICE`    | `ecs_service`          |
+| Variable          | Value                  |
+|-------------------|------------------------|
+| `AWS_ROLE_ARN`    | `github_role_arn`      |
+| `AWS_REGION`      | Terraform `region`     |
+| `ECR_REPOSITORY`  | `ecr_repository`       |
+| `ECS_CLUSTER`     | `ecs_cluster`          |
+| `ECS_SERVICE`     | `ecs_service`          |
+| `ECS_TASK_FAMILY` | `ecs_task_family`      |
 
 ## Structure
 

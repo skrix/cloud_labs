@@ -27,13 +27,31 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: build and push
+        id: build
         env:
           IMAGE: ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}
         run: |
           docker build -t $IMAGE:${{ github.sha }} -t $IMAGE:latest .
           docker push --all-tags $IMAGE
+          echo "image=$IMAGE:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: download task definition
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ vars.ECS_TASK_FAMILY }} \
+            --query taskDefinition > task-definition.json
+
+      - name: render task definition
+        id: render
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: api
+          image: ${{ steps.build.outputs.image }}
 
       - name: deploy
-        run: |
-          aws ecs update-service --cluster ${{ vars.ECS_CLUSTER }} --service ${{ vars.ECS_SERVICE }} --force-new-deployment
-          aws ecs wait services-stable --cluster ${{ vars.ECS_CLUSTER }} --services ${{ vars.ECS_SERVICE }}
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render.outputs.task-definition }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          service: ${{ vars.ECS_SERVICE }}
+          wait-for-service-stability: true
