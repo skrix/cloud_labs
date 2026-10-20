@@ -2,7 +2,18 @@
 
 REST API for registering ESP32 devices and collecting sensor readings.
 
-## Run
+Public URL: http://iot-hub-alb-2082221416.eu-north-1.elb.amazonaws.com
+(API docs: [`/docs`](http://iot-hub-alb-2082221416.eu-north-1.elb.amazonaws.com/docs))
+
+## Run with Docker
+
+```sh
+cp .env.example .env    # set POSTGRES_PASSWORD, JWT_SECRET
+docker compose up --build
+```
+API on http://localhost:3000
+
+## Run locally
 
 ```sh
 npm install
@@ -67,6 +78,36 @@ All under `/api`.
 | `GET /user-devices/:id/readings?from=&to=&limit=` | owner          |
 | `POST /ingest`                                    | `X-Device-Key` |
 
+## Deploy to AWS
+
+```sh
+cd deploy/aws/terraform
+cp terraform.tfvars.example terraform.tfvars  # set budget_email, github_repo
+terraform init
+terraform apply                               # also builds and pushes the image
+terraform output url
+```
+
+| Variable       | Default        | Description                             |
+|----------------|----------------|-----------------------------------------|
+| `region`       | `eu-central-1` | AWS region                              |
+| `project`      | `iot-hub`      | Name prefix for resources               |
+| `github_repo`  |                | `owner/repo` allowed to deploy          |
+| `budget_email` |                | Budget alert recipient                  |
+| `image_tag`    | `latest`       | Image tag built and run by Terraform    |
+
+### Continuous deployment
+
+Set these GitHub repository variables from `terraform output`:
+
+| Variable         | Value                  |
+|------------------|------------------------|
+| `AWS_ROLE_ARN`   | `github_role_arn`      |
+| `AWS_REGION`     | Terraform `region`     |
+| `ECR_REPOSITORY` | `ecr_repository`       |
+| `ECS_CLUSTER`    | `ecs_cluster`          |
+| `ECS_SERVICE`    | `ecs_service`          |
+
 ## Structure
 
 ```
@@ -80,6 +121,8 @@ src/
   utils/              crypto, jwt, logger
 api/openapi.yaml      OpenAPI spec for /docs
 test/                 unit and API tests
+deploy/aws/terraform/ AWS infrastructure
+.github/workflows/    CI and CD
 Dockerfile
 compose.yaml
 ```

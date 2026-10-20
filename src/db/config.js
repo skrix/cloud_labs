@@ -11,7 +11,7 @@ module.exports = {
   development: base,
   test: {
     ...base,
-    database: `${base.database}`,
+    database: `${base.database}_test`,
     logging: false,
   },
   production: {
