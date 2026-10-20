@@ -38,7 +38,7 @@ jobs:
       PGHOST: localhost
       PGUSER: ci-test-user
       PGPASSWORD: ci-test-password
-      PGDATABASE: iot_hub_test
+      PGDATABASE: iot_hub
       JWT_SECRET: ci-test-secret
 
     steps:

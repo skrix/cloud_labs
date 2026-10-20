@@ -2,12 +2,18 @@
 
 REST API for registering ESP32 devices and collecting sensor readings.
 
-URL:
-http://iot-hub-alb-2082221416.eu-north-1.elb.amazonaws.com
+Public URL: http://iot-hub-alb-2082221416.eu-north-1.elb.amazonaws.com
+(API docs: [`/docs`](http://iot-hub-alb-2082221416.eu-north-1.elb.amazonaws.com/docs))
 
-(API docs at `/docs`).
+## Run with Docker
 
-## Run
+```sh
+cp .env.example .env    # set POSTGRES_PASSWORD, JWT_SECRET
+docker compose up --build
+```
+API on http://localhost:3000
+
+## Run locally
 
 ```sh
 npm install
@@ -89,6 +95,18 @@ terraform output url
 | `github_repo`  |                | `owner/repo` allowed to deploy          |
 | `budget_email` |                | Budget alert recipient                  |
 | `image_tag`    | `latest`       | Image tag built and run by Terraform    |
+
+### Continuous deployment
+
+Set these GitHub repository variables from `terraform output`:
+
+| Variable         | Value                  |
+|------------------|------------------------|
+| `AWS_ROLE_ARN`   | `github_role_arn`      |
+| `AWS_REGION`     | Terraform `region`     |
+| `ECR_REPOSITORY` | `ecr_repository`       |
+| `ECS_CLUSTER`    | `ecs_cluster`          |
+| `ECS_SERVICE`    | `ecs_service`          |
 
 ## Structure
 
