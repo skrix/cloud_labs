@@ -12,6 +12,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-24.04
+    environment: production
     steps:
       - name: checkout
         uses: actions/checkout@v6
@@ -19,8 +20,8 @@ jobs:
       - name: aws credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: ecr login
         id: ecr
@@ -28,12 +29,12 @@ jobs:
 
       - name: build and push
         env:
-          IMAGE: ${{ steps.ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}
+          IMAGE: ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}
         run: |
           docker build -t $IMAGE:${{ github.sha }} -t $IMAGE:latest .
           docker push --all-tags $IMAGE
 
       - name: deploy
         run: |
-          aws ecs update-service --cluster ${{ secrets.ECS_CLUSTER }} --service ${{ secrets.ECS_SERVICE }} --force-new-deployment
-          aws ecs wait services-stable --cluster ${{ secrets.ECS_CLUSTER }} --services ${{ secrets.ECS_SERVICE }}
+          aws ecs update-service --cluster ${{ vars.ECS_CLUSTER }} --service ${{ vars.ECS_SERVICE }} --force-new-deployment
+          aws ecs wait services-stable --cluster ${{ vars.ECS_CLUSTER }} --services ${{ vars.ECS_SERVICE }}
