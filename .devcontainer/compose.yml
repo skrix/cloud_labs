@@ -6,6 +6,7 @@ services:
       - ..:/workspaces/iot-hub:cached
       - aws-config:/home/node/.aws
       - ${HOME}/.zshrc:/home/node/.zshrc:ro
+      - ${HOME}/.gitignore:${HOME}/.gitignore:ro
     environment:
       PGHOST: db
       PGUSER: postgres
