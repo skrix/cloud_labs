@@ -36,9 +36,14 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect   = "Allow"
-      Action   = "ssm:GetParameters"
-      Resource = [aws_ssm_parameter.db_password.arn, aws_ssm_parameter.jwt_secret.arn]
+      Effect = "Allow"
+      Action = "ssm:GetParameters"
+      Resource = [
+        aws_ssm_parameter.db_password.arn,
+        aws_ssm_parameter.jwt_secret.arn,
+        aws_ssm_parameter.admin_email.arn,
+        aws_ssm_parameter.admin_password.arn,
+      ]
     }]
   })
 }
@@ -57,10 +62,11 @@ resource "aws_ecs_task_definition" "api" {
   }
 
   container_definitions = jsonencode([{
-    name         = "api"
-    image        = "${aws_ecr_repository.api.repository_url}:${var.image_tag}"
-    essential    = true
-    command      = ["sh", "-c", "npm run db:migrate && exec node src/server.js"]
+    name      = "api"
+    image     = "${aws_ecr_repository.api.repository_url}:${var.image_tag}"
+    essential = true
+    # pending migrations and seeders (each runs once per database) before the server starts
+    command      = ["sh", "-c", "npm run db:setup && exec node src/server.js"]
     portMappings = [{ containerPort = 3000, protocol = "tcp" }]
     environment = [
       { name = "NODE_ENV", value = "production" },
@@ -73,6 +79,8 @@ resource "aws_ecs_task_definition" "api" {
     secrets = [
       { name = "PGPASSWORD", valueFrom = aws_ssm_parameter.db_password.arn },
       { name = "JWT_SECRET", valueFrom = aws_ssm_parameter.jwt_secret.arn },
+      { name = "ADMIN_EMAIL", valueFrom = aws_ssm_parameter.admin_email.arn },
+      { name = "ADMIN_PASSWORD", valueFrom = aws_ssm_parameter.admin_password.arn },
     ]
     logConfiguration = {
       logDriver = "awslogs"

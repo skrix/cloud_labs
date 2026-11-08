@@ -29,7 +29,7 @@ API docs: http://localhost:3000/docs
 | `npm start` / `npm run dev`   | Start / start with watch  |
 | `npm run db:migrate[:undo]`   | Run / undo migrations     |
 | `npm run db:seed[:undo]`      | Add / remove admin, catalog and demo data |
-| `npm run db:setup`            | Migrations + all seeds (each seeder runs once per database) |
+| `npm run db:setup`            | Migrations + all seeds, each once per database (run on ECS task start) |
 | `npm run lint`                | ESLint                    |
 | `npm run db:test:create`      | Create the test database (once) |
 | `npm test`                    | Migrate the test database and run tests |
@@ -60,6 +60,14 @@ NODE_ENV
 | `alice@example.com` | `alice12345` | user  | `demo-key-kitchen`, `demo-key-balcony` |
 | `bob@example.com`   | `bob12345`   | user  | `demo-key-garage`                      |
 | `loadtest-0…5@example.com` | `loadtest12345` | user | `loadtest-key-0` … `loadtest-key-59` (10 devices per user, 30 days of readings; load test) |
+
+## Admin and catalog on AWS
+
+The ECS task runs `npm run db:setup` (migrations + all seeds) before the server starts. Like
+migrations, each seeder runs once per database: executed seeders are recorded in the
+`SequelizeData` table, so later task starts (deploys, autoscaling) skip them.
+The admin credentials are `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env`; `terraform apply` reads
+them from there into SSM parameters, and the task gets them as secrets.
 
 ## Promote an admin
 
