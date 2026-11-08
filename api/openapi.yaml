@@ -379,6 +379,26 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /user-devices/{id}/readings/{readingId}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+      - name: readingId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Readings]
+      summary: Get one reading of one of the caller's devices
+      responses:
+        '200':
+          description: Reading
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reading' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /ingest:
     post:
       tags: [Readings]

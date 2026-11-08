@@ -13,6 +13,7 @@ const router = express.Router();
 
 router.use(authenticate);
 router.param('id', validateIdParam);
+router.param('readingId', validateIdParam);
 
 router.get('/', async (req, res) => {
   const userDevices = await userDevicesService.listUserDevices(req.user.id);
@@ -50,6 +51,11 @@ router.get('/:id/readings', async (req, res) => {
   const query = validateReadingsQuery(req.query);
   const readings = await readingsService.listReadings(req.user.id, req.params.id, query);
   res.json(readings);
+});
+
+router.get('/:id/readings/:readingId', async (req, res) => {
+  const reading = await readingsService.getReading(req.user.id, req.params.id, req.params.readingId);
+  res.json(reading);
 });
 
 module.exports = router;

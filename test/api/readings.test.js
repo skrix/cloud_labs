@@ -1,5 +1,6 @@
 const { describe, it, before, beforeEach, after } = require('node:test');
 const assert = require('node:assert/strict');
+const { randomUUID } = require('node:crypto');
 const { startServer } = require('../helpers/server');
 const { resetDatabase, closeDatabase } = require('../helpers/database');
 const { createUser, createDevice } = require('../helpers/fixtures');
@@ -99,5 +100,31 @@ describe('readings', () => {
     const otherUser = await createUser();
     const res = await listReadings('', otherUser.token);
     assert.equal(res.status, 404);
+  });
+
+  it('gets one reading by id', async () => {
+    const created = await ingest({ temperature: 19 });
+    const res = await server.request(`/api/user-devices/${userDevice.id}/readings/${created.body.id}`, {
+      token: owner.token,
+    });
+    assert.equal(res.status, 200);
+    assert.deepEqual(res.body, created.body);
+  });
+
+  it('returns 404 for a reading of another user or another device', async () => {
+    const created = await ingest({ temperature: 19 });
+    const path = `/api/user-devices/${userDevice.id}/readings/${created.body.id}`;
+    const otherUser = await createUser();
+    const foreign = await server.request(path, { token: otherUser.token });
+    const unknown = await server.request(`/api/user-devices/${userDevice.id}/readings/${randomUUID()}`, {
+      token: owner.token,
+    });
+    assert.equal(foreign.status, 404);
+    assert.equal(unknown.status, 404);
+  });
+
+  it('rejects a reading id that is not a UUID', async () => {
+    const res = await server.request(`/api/user-devices/${userDevice.id}/readings/42`, { token: owner.token });
+    assert.equal(res.status, 400);
   });
 });

@@ -25,6 +25,15 @@ async function listReadings(userId, userDeviceId, { from, to, limit }) {
   });
 }
 
+async function getReading(userId, userDeviceId, readingId) {
+  await findOwnedUserDevice(userId, userDeviceId);
+  const reading = await Reading.findOne({ where: { id: readingId, userDeviceId } });
+  if (!reading) {
+    throw new HttpError(404, 'Reading not found');
+  }
+  return reading;
+}
+
 async function ingestReading(apiKey, data) {
   const userDevice = await findUserDeviceByApiKey(apiKey);
   return sequelize.transaction(async (transaction) => {
@@ -34,4 +43,4 @@ async function ingestReading(apiKey, data) {
   });
 }
 
-module.exports = { listReadings, ingestReading };
+module.exports = { listReadings, getReading, ingestReading };
