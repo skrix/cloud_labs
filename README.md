@@ -104,6 +104,9 @@ terraform output url
 | `github_repo`  |                | `owner/repo` allowed to deploy          |
 | `budget_email` |                | Budget alert recipient                  |
 | `image_tag`    | `latest`       | Image tag built and run by Terraform    |
+| `autoscaling_min` / `autoscaling_max` | `1` / `4` | API task count range ([docs/AUTOSCALING.md](docs/AUTOSCALING.md)) |
+| `autoscaling_cpu_target` | `60` | Target average CPU, %                |
+| `autoscaling_scale_out_cooldown` / `autoscaling_scale_in_cooldown` | `60` / `300` | Cooldowns, s |
 
 ### Continuous deployment
 

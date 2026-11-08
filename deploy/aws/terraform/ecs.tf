@@ -1,5 +1,11 @@
 resource "aws_ecs_cluster" "main" {
   name = var.project
+
+  # RunningTaskCount / DesiredTaskCount metrics in ECS/ContainerInsights
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
 }
 
 resource "aws_cloudwatch_log_group" "api" {
@@ -85,7 +91,7 @@ resource "aws_ecs_service" "api" {
   name                              = "${var.project}-api"
   cluster                           = aws_ecs_cluster.main.id
   task_definition                   = aws_ecs_task_definition.api.arn
-  desired_count                     = 1
+  desired_count                     = var.autoscaling_min # initial only, then managed by autoscaling.tf
   launch_type                       = "FARGATE"
   health_check_grace_period_seconds = 60
 
@@ -106,9 +112,10 @@ resource "aws_ecs_service" "api" {
     rollback = true
   }
 
-  # CD registers new task definition revisions; don't roll them back on apply
+  # CD registers new task definition revisions; autoscaling owns desired_count.
+  # Don't revert either of them on apply.
   lifecycle {
-    ignore_changes = [task_definition]
+    ignore_changes = [task_definition, desired_count]
   }
 
   depends_on = [aws_lb_listener.http, aws_iam_role_policy_attachment.ecs_execution]
