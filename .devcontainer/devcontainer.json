@@ -21,6 +21,7 @@
       "plugins": "git terraform docker docker-compose"
     }
   },
+  "postCreateCommand": ".devcontainer/post-create.sh",
   "forwardPorts": [
     3000
   ],
