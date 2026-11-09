@@ -14,7 +14,8 @@
     "db:seed:undo": "node --env-file-if-exists=.env node_modules/.bin/sequelize-cli db:seed:undo:all",
     "db:test:create": "NODE_ENV=test sequelize-cli db:create",
     "pretest": "NODE_ENV=test sequelize-cli db:migrate",
-    "test": "NODE_ENV=test JWT_SECRET=test-secret node --test --test-concurrency=1 \"test/**/*.test.js\""
+    "test": "NODE_ENV=test JWT_SECRET=test-secret node --test --test-concurrency=1 \"test/**/*.test.js\"",
+    "loadtest": "loadtest/run.sh"
   },
   "repository": {
     "type": "git",

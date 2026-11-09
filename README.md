@@ -33,6 +33,7 @@ API docs: http://localhost:3000/docs
 | `npm run lint`                | ESLint                    |
 | `npm run db:test:create`      | Create the test database (once) |
 | `npm test`                    | Migrate the test database and run tests |
+| `npm run loadtest`            | k6 load test ([docs/LOADTEST.md](docs/LOADTEST.md)) |
 
 ## Environment
 
@@ -142,6 +143,8 @@ src/
   utils/              crypto, jwt, logger
 api/openapi.yaml      OpenAPI spec for /docs
 test/                 unit and API tests
+loadtest/             k6 load test
+docs/                 lab reports
 deploy/aws/terraform/ AWS infrastructure
 .github/workflows/    CI and CD
 Dockerfile
