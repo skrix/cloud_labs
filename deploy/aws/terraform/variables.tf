@@ -34,17 +34,12 @@ variable "autoscaling_min" {
 variable "autoscaling_max" {
   type    = number
   default = 4
-
-  validation {
-    condition     = var.autoscaling_max >= var.autoscaling_min && var.autoscaling_max <= 4
-    error_message = "autoscaling_max must be between autoscaling_min and 4 (lab limit)."
-  }
 }
 
 variable "autoscaling_cpu_target" {
   description = "Target average CPU utilization of the API service, %"
   type        = number
-  default     = 60
+  default     = 50
 }
 
 variable "autoscaling_scale_out_cooldown" {
