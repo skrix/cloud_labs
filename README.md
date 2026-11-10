@@ -123,6 +123,8 @@ terraform output url
 | `cache_enabled` / `cache_ttl_seconds` | `true` / `60` | Redis cache for readings stats ([docs/CACHE.md](docs/CACHE.md)) |
 | `ingest_queue_enabled` | `true` | `POST /ingest` through SQS and the worker (202) ([docs/QUEUE.md](docs/QUEUE.md)) |
 | `worker_min` / `worker_max` / `worker_backlog_per_task` | `1` / `4` / `100` | Worker autoscaling on queued messages per task |
+| `schedule_enabled` / `schedule_day_cron` / `schedule_night_cron` / `schedule_timezone` | `true` / 08:00 / 22:00 / `Europe/Kyiv` | Day and night minimum task counts ([docs/SCHEDULE.md](docs/SCHEDULE.md)) |
+| `api_day_min` | `2` | API minimum during the day (night: `autoscaling_min`) |
 
 ### Continuous deployment
 

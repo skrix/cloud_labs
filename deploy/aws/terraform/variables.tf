@@ -104,3 +104,32 @@ variable "worker_backlog_per_task" {
   type        = number
   default     = 100
 }
+
+variable "schedule_enabled" {
+  description = "Different minimum task counts for day and night (schedule.tf)"
+  type        = bool
+  default     = true
+}
+
+variable "schedule_timezone" {
+  type    = string
+  default = "Europe/Kyiv"
+}
+
+variable "schedule_day_cron" {
+  description = "When the day minimums start"
+  type        = string
+  default     = "cron(0 8 * * ? *)"
+}
+
+variable "schedule_night_cron" {
+  description = "When the night minimums start"
+  type        = string
+  default     = "cron(0 22 * * ? *)"
+}
+
+variable "api_day_min" {
+  description = "Minimum API tasks during the day (night: autoscaling_min)"
+  type        = number
+  default     = 2
+}

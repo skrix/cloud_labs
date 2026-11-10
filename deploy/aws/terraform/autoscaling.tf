@@ -4,6 +4,11 @@ resource "aws_appautoscaling_target" "api" {
   resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.api.name}"
   min_capacity       = var.autoscaling_min
   max_capacity       = var.autoscaling_max
+
+  # schedule.tf changes min_capacity day and night; apply must not reset it
+  lifecycle {
+    ignore_changes = [min_capacity]
+  }
 }
 
 # Target tracking creates and owns two CloudWatch alarms (TargetTracking-service/...-AlarmHigh/-AlarmLow):
