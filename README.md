@@ -115,6 +115,7 @@ terraform output url
 | `autoscaling_min` / `autoscaling_max` | `1` / `4` | API task count range ([docs/AUTOSCALING.md](docs/AUTOSCALING.md)) |
 | `autoscaling_cpu_target` | `70` | Target average CPU, %                |
 | `autoscaling_scale_out_cooldown` / `autoscaling_scale_in_cooldown` | `60` / `300` | Cooldowns, s |
+| `alert_latency_p95_ms` / `alert_latency_minutes` | `500` / `2` | Overload email alert ([docs/ALERTS.md](docs/ALERTS.md)) |
 
 ### Continuous deployment
 

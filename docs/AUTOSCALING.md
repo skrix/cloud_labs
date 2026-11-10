@@ -125,13 +125,13 @@ CloudWatch → Dashboards → `iot-hub`. Terraform:
 [`deploy/aws/terraform/monitoring.tf`](../deploy/aws/terraform/monitoring.tf)
 (`aws_cloudwatch_dashboard.api`). Усі графіки — хвилинні точки (`period = 60`).
 
-| Графік                        | Метрика                                                               | Статистика  |
-|-------------------------------|-----------------------------------------------------------------------|-------------|
-| ECS tasks (desired / running) | `DesiredTaskCount`, `RunningTaskCount` (`ECS/ContainerInsights`)      | Maximum     |
-| API CPU / memory (%)          | `CPUUtilization`, `MemoryUtilization` (`AWS/ECS`) + лінія target 70 % | Average     |
-| Requests per minute           | `RequestCount` (`AWS/ApplicationELB`)                                 | Sum         |
-| Latency p95 (seconds)         | `TargetResponseTime` (`AWS/ApplicationELB`)                           | p95 (і p50) |
-| 5xx responses per minute      | `HTTPCode_Target_5XX_Count`, `HTTPCode_ELB_5XX_Count`                 | Sum         |
+| Графік                        | Метрика                                                                 | Статистика  |
+|-------------------------------|-------------------------------------------------------------------------|-------------|
+| ECS tasks (desired / running) | `DesiredTaskCount`, `RunningTaskCount` (`ECS/ContainerInsights`)        | Maximum     |
+| API CPU / memory (%)          | `CPUUtilization`, `MemoryUtilization` (`AWS/ECS`) + лінія target 70 %   | Average     |
+| Requests per minute           | `RequestCount` (`AWS/ApplicationELB`)                                   | Sum         |
+| Latency p95 (seconds)         | `TargetResponseTime` (`AWS/ApplicationELB`) + лінія порогу alert 500 мс | p95 (і p50) |
+| 5xx responses per minute      | `HTTPCode_Target_5XX_Count`, `HTTPCode_ELB_5XX_Count`                   | Sum         |
 
 Під графіками — таблиця помилок із журналів API (CloudWatch Logs Insights).
 

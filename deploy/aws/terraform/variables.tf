@@ -53,3 +53,15 @@ variable "autoscaling_scale_in_cooldown" {
   type        = number
   default     = 300
 }
+
+variable "alert_latency_p95_ms" {
+  description = "Overload alert: API p95 latency threshold, ms"
+  type        = number
+  default     = 500
+}
+
+variable "alert_latency_minutes" {
+  description = "Overload alert: consecutive minutes above the threshold before the alert fires"
+  type        = number
+  default     = 2
+}

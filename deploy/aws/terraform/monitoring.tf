@@ -48,6 +48,26 @@ resource "aws_cloudwatch_metric_alarm" "api_unhealthy" {
   }
 }
 
+resource "aws_cloudwatch_metric_alarm" "api_latency_p95" {
+  alarm_name          = "${var.project}-api-latency-p95"
+  alarm_description   = "API p95 latency above ${var.alert_latency_p95_ms} ms for ${var.alert_latency_minutes} minutes (overload)"
+  namespace           = "AWS/ApplicationELB"
+  metric_name         = "TargetResponseTime"
+  extended_statistic  = "p95"
+  period              = 60
+  evaluation_periods  = var.alert_latency_minutes
+  datapoints_to_alarm = var.alert_latency_minutes
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = var.alert_latency_p95_ms / 1000 # TargetResponseTime is in seconds
+  treat_missing_data  = "notBreaching"                  # no traffic is not an overload
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+
+  dimensions = {
+    LoadBalancer = aws_lb.api.arn_suffix
+  }
+}
+
 locals {
   alb_dimensions = ["LoadBalancer", aws_lb.api.arn_suffix]
   ecs_dimensions = ["ClusterName", aws_ecs_cluster.main.name, "ServiceName", aws_ecs_service.api.name]
@@ -56,6 +76,7 @@ locals {
 resource "aws_cloudwatch_dashboard" "api" {
   dashboard_name = var.project
   dashboard_body = jsonencode({
+    periodOverride = "inherit"
     widgets = [
       {
         type = "metric", x = 0, y = 0, width = 12, height = 6
@@ -104,6 +125,9 @@ resource "aws_cloudwatch_dashboard" "api" {
           title  = "Latency p95 (seconds)"
           region = var.region
           period = 60
+          annotations = {
+            horizontal = [{ label = "Alert threshold", value = var.alert_latency_p95_ms / 1000 }]
+          }
           metrics = [
             concat(["AWS/ApplicationELB", "TargetResponseTime"], local.alb_dimensions, [{ stat = "p95", label = "p95" }]),
             concat(["AWS/ApplicationELB", "TargetResponseTime"], local.alb_dimensions, [{ stat = "p50", label = "p50" }]),
