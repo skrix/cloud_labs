@@ -6,6 +6,8 @@ const { createUser, createDevice } = require('../helpers/fixtures');
 const { ingestQueue, createQueue, MAX_MESSAGE_BYTES } = require('../../src/queue');
 const { storeReadings } = require('../../src/services/readings');
 const { Reading } = require('../../src/db/models');
+const { idempotency, createIdempotency } = require('../../src/idempotency');
+const { fakeRedis } = require('../helpers/fake-redis');
 
 describe('ingest through the queue', () => {
   let server;
@@ -83,6 +85,18 @@ describe('ingest through the queue', () => {
 
     const fetched = await server.request(`/api/user-devices/${userDevice.id}`, { token: owner.token });
     assert.equal(fetched.body.lastSeenAt, newer[0].createdAt);
+  });
+
+  it('queues a request retried with the same Idempotency-Key once, with the same ids', async () => {
+    Object.assign(idempotency, createIdempotency({ client: fakeRedis() }));
+    const headers = { 'Idempotency-Key': 'reading-001' };
+    const first = await server.request('/api/ingest', { method: 'POST', apiKey, body: { t: 1 }, headers });
+    const second = await server.request('/api/ingest', { method: 'POST', apiKey, body: { t: 1 }, headers });
+
+    assert.equal(second.status, 202);
+    assert.deepEqual(second.body, first.body);
+    assert.equal(second.headers.location, first.headers.location);
+    assert.equal(sent.length, 1);
   });
 
   it('checks the device key before queueing', async () => {

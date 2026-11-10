@@ -1,6 +1,6 @@
 const { app } = require('./app');
 const { sequelize } = require('./db');
-const { closeCache } = require('./cache');
+const { closeRedis } = require('./redis');
 const { logger } = require('./utils/logger');
 
 const DEFAULT_PORT = 3000;
@@ -21,7 +21,7 @@ function shutdown(signal) {
   logger.info('shutdown started', { signal });
 
   server.close(async () => {
-    await closeCache();
+    await closeRedis();
     await sequelize.close();
     logger.info('shutdown complete');
     process.exit(0);

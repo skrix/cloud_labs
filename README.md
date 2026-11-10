@@ -47,9 +47,10 @@ PGDATABASE
 JWT_SECRET
 ADMIN_EMAIL    # catalog seeder
 ADMIN_PASSWORD # catalog seeder
-REDIS_URL      # cache for readings stats, e.g. redis://localhost:6379 (unset: no cache)
+REDIS_URL      # cache for readings stats and Idempotency-Key responses, e.g. redis://localhost:6379 (unset: neither)
 CACHE_ENABLED  # true
 CACHE_TTL_SECONDS # 60
+IDEMPOTENCY_TTL_SECONDS # 86400 (24 h)
 INGEST_QUEUE_URL  # SQS queue for POST /ingest (unset: store synchronously, 201)
 AWS_REGION        # region of the queue
 PORT # 3000

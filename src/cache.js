@@ -1,5 +1,5 @@
-const { createClient } = require('redis');
 const { logger } = require('./utils/logger');
+const { redisClient } = require('./redis');
 
 const DEFAULT_TTL_SECONDS = 60;
 
@@ -38,27 +38,8 @@ function createCache({ client = null, ttlSeconds = DEFAULT_TTL_SECONDS } = {}) {
   return { getOrLoad, ttlSeconds, enabled: Boolean(client) };
 }
 
-function createRedisClient(url) {
-  const client = createClient({
-    url,
-    socket: { connectTimeout: 2000, reconnectStrategy: (retries) => Math.min(retries * 200, 5000) },
-    disableOfflineQueue: true,
-  });
-  client.on('error', (error) => logger.error('redis error', { error: error.message }));
-  client.on('ready', () => logger.info('redis connected', { url }));
-  client.connect().catch((error) => logger.error('redis connect failed', { error: error.message }));
-  return client;
-}
-
-const enabled = Boolean(process.env.REDIS_URL) && process.env.CACHE_ENABLED !== 'false';
+const enabled = process.env.CACHE_ENABLED !== 'false';
 const ttlSeconds = Number(process.env.CACHE_TTL_SECONDS) || DEFAULT_TTL_SECONDS;
-const redisClient = enabled ? createRedisClient(process.env.REDIS_URL) : null;
-const cache = createCache({ client: redisClient, ttlSeconds });
+const cache = createCache({ client: enabled ? redisClient : null, ttlSeconds });
 
-async function closeCache() {
-  if (redisClient?.isOpen) {
-    await redisClient.quit();
-  }
-}
-
-module.exports = { cache, closeCache, createCache, DEFAULT_TTL_SECONDS };
+module.exports = { cache, createCache, DEFAULT_TTL_SECONDS };

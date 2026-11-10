@@ -445,8 +445,19 @@ paths:
         queues the readings and answers 202; a worker stores them shortly after. Until then
         GET /user-devices/{id}/readings/{readingId} answers 404. Without a queue the readings are
         stored before the response (201).
+        With an Idempotency-Key the first request is executed and its response kept for 24 hours;
+        a repeat with the same key (from the same device) returns that response again
+        (Idempotent-Replayed: true) without storing or queueing anything.
       security:
         - deviceKey: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: >
+            Client-chosen key of this write (1-255 visible ASCII characters), e.g. a UUID per
+            reading. Reuse it only when retrying the same request.
+          schema: { type: string, minLength: 1, maxLength: 255 }
       requestBody:
         required: true
         content:
@@ -464,6 +475,9 @@ paths:
       responses:
         '201':
           description: Stored (one reading, or an array for a batch)
+          headers:
+            Idempotent-Replayed:
+              $ref: '#/components/headers/IdempotentReplayed'
           content:
             application/json:
               schema:
@@ -476,6 +490,8 @@ paths:
             Accepted and queued (one reading, or an array for a batch). The ids and createdAt are
             final; the readings become readable once the worker stores them.
           headers:
+            Idempotent-Replayed:
+              $ref: '#/components/headers/IdempotentReplayed'
             Location:
               description: Where the reading will be readable (single reading only)
               schema: { type: string }
@@ -488,8 +504,18 @@ paths:
                     items: { $ref: '#/components/schemas/AcceptedReading' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '409':
+          description: A request with the same Idempotency-Key is still being processed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
         '413':
           description: Body larger than one queue message (256 KB)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '422':
+          description: The Idempotency-Key was already used with a different body
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
@@ -504,6 +530,11 @@ components:
       type: apiKey
       in: header
       name: X-Device-Key
+
+  headers:
+    IdempotentReplayed:
+      description: Present (true) when the response is a replay of an earlier request with the same Idempotency-Key
+      schema: { type: string, enum: ['true'] }
 
   parameters:
     Id:

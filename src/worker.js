@@ -2,7 +2,7 @@ const { sequelize } = require('./db');
 const { ingestQueue } = require('./queue');
 const { storeReadings } = require('./services/readings');
 const { createIngestWorker } = require('./ingest-worker');
-const { closeCache } = require('./cache');
+const { closeRedis } = require('./redis');
 const { logger } = require('./utils/logger');
 
 if (!ingestQueue.enabled) {
@@ -22,7 +22,7 @@ process.once('SIGINT', () => shutdown('SIGINT'));
 
 logger.info('worker started');
 worker.run().then(async () => {
-  await closeCache();
+  await closeRedis();
   await sequelize.close();
   logger.info('worker shutdown complete');
   process.exit(0);
