@@ -17,8 +17,8 @@ API on http://localhost:3000
 
 ```sh
 npm install
-npm run db:migrate
-npm run db:seed
+cp .env.example .env    # set ADMIN_EMAIL, ADMIN_PASSWORD
+npm run db:setup        # migrations + seeds
 npm run dev
 ```
 
@@ -28,7 +28,8 @@ API docs: http://localhost:3000/docs
 |-------------------------------|---------------------------|
 | `npm start` / `npm run dev`   | Start / start with watch  |
 | `npm run db:migrate[:undo]`   | Run / undo migrations     |
-| `npm run db:seed[:undo]`      | Add / remove demo data    |
+| `npm run db:seed[:undo]`      | Add / remove admin, catalog and demo data |
+| `npm run db:setup`            | Migrations + all seeds (each seeder runs once per database) |
 | `npm run lint`                | ESLint                    |
 | `npm run db:test:create`      | Create the test database (once) |
 | `npm test`                    | Migrate the test database and run tests |
@@ -42,6 +43,8 @@ PGUSER
 PGPASSWORD
 PGDATABASE
 JWT_SECRET
+ADMIN_EMAIL    # catalog seeder
+ADMIN_PASSWORD # catalog seeder
 PORT # 3000
 NODE_ENV
 ```
@@ -50,7 +53,7 @@ NODE_ENV
 
 | Email               | Password     | Role  | Device API keys                        |
 |---------------------|--------------|-------|----------------------------------------|
-| `admin@example.com` | `admin12345` | admin |                                        |
+| `ADMIN_EMAIL` (.env) | `ADMIN_PASSWORD` (.env) | admin |                              |
 | `alice@example.com` | `alice12345` | user  | `demo-key-kitchen`, `demo-key-balcony` |
 | `bob@example.com`   | `bob12345`   | user  | `demo-key-garage`                      |
 

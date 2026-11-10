@@ -4,7 +4,8 @@ const base = {
   username: process.env.PGUSER,
   password: process.env.PGPASSWORD,
   database: process.env.PGDATABASE,
-  dialect: 'postgres'
+  dialect: 'postgres',
+  seederStorage: 'sequelize',
 };
 
 module.exports = {
