@@ -79,6 +79,7 @@ All under `/api`.
 | `GET`/`PATCH`/`DELETE /user-devices/:id`          | owner          |
 | `POST /user-devices/:id/rotate-key`               | owner          |
 | `GET /user-devices/:id/readings?from=&to=&limit=` | owner          |
+| `GET /user-devices/:id/readings/stats?from=&to=&bucket=` | owner   |
 | `GET /user-devices/:id/readings/:readingId`       | owner          |
 | `POST /ingest`                                    | `X-Device-Key` |
 

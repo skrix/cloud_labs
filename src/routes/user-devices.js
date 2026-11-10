@@ -7,6 +7,7 @@ const {
   validateUserDeviceCreate,
   validateUserDeviceUpdate,
   validateReadingsQuery,
+  validateReadingsStatsQuery,
 } = require('../validators/user-devices');
 
 const router = express.Router();
@@ -51,6 +52,12 @@ router.get('/:id/readings', async (req, res) => {
   const query = validateReadingsQuery(req.query);
   const readings = await readingsService.listReadings(req.user.id, req.params.id, query);
   res.json(readings);
+});
+
+// Before /:id/readings/:readingId, which would otherwise take "stats" as a reading id.
+router.get('/:id/readings/stats', async (req, res) => {
+  const query = validateReadingsStatsQuery(req.query);
+  res.json(await readingsService.getReadingStats(req.user.id, req.params.id, query));
 });
 
 router.get('/:id/readings/:readingId', async (req, res) => {

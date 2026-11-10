@@ -1,4 +1,5 @@
 const { HttpError } = require('../errors');
+const { BUCKETS } = require('../utils/stats');
 const { requireObject, requireString, optionalString, requireUuid, optionalUuid, pick } = require('./helpers');
 
 const DEFAULT_READINGS_LIMIT = 100;
@@ -50,4 +51,21 @@ function validateReadingsQuery(query) {
   };
 }
 
-module.exports = { validateUserDeviceCreate, validateUserDeviceUpdate, validateReadingsQuery };
+function validateReadingsStatsQuery(query) {
+  const bucket = query.bucket ?? 'hour';
+  if (!BUCKETS.includes(bucket)) {
+    throw new HttpError(400, `bucket must be one of: ${BUCKETS.join(', ')}`);
+  }
+  return {
+    from: parseDate(query.from, 'from', new Date(Date.now() - DEFAULT_READINGS_PERIOD_MS)),
+    to: parseDate(query.to, 'to', new Date()),
+    bucket,
+  };
+}
+
+module.exports = {
+  validateUserDeviceCreate,
+  validateUserDeviceUpdate,
+  validateReadingsQuery,
+  validateReadingsStatsQuery,
+};

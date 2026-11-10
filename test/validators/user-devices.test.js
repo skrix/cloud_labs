@@ -4,6 +4,7 @@ const {
   validateUserDeviceCreate,
   validateUserDeviceUpdate,
   validateReadingsQuery,
+  validateReadingsStatsQuery,
 } = require('../../src/validators/user-devices');
 
 const DEVICE_ID = '0b8f0c5e-3f6a-4d2b-9c1e-7a5d4e3f2a10';
@@ -56,5 +57,18 @@ describe('validateReadingsQuery', () => {
       status: 400,
       message: 'from must be an ISO 8601 date',
     });
+  });
+});
+
+describe('validateReadingsStatsQuery', () => {
+  it('defaults to hourly buckets over the last 7 days', () => {
+    const query = validateReadingsStatsQuery({});
+    assert.equal(query.bucket, 'hour');
+    assert.ok(Math.abs(query.to - query.from - 7 * DAY_MS) < 1000);
+  });
+
+  it('accepts day buckets and rejects others', () => {
+    assert.equal(validateReadingsStatsQuery({ bucket: 'day' }).bucket, 'day');
+    assert.throws(() => validateReadingsStatsQuery({ bucket: 'week' }), { status: 400 });
   });
 });
