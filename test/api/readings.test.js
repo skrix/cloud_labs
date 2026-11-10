@@ -1,5 +1,6 @@
 const { describe, it, before, beforeEach, after } = require('node:test');
 const assert = require('node:assert/strict');
+const { randomUUID } = require('node:crypto');
 const { startServer } = require('../helpers/server');
 const { resetDatabase, closeDatabase } = require('../helpers/database');
 const { createUser, createDevice } = require('../helpers/fixtures');
@@ -64,9 +65,19 @@ describe('readings', () => {
     assert.equal(unknown.status, 401);
   });
 
-  it('rejects a body that is not an object', async () => {
-    const res = await ingest([1, 2, 3]);
-    assert.equal(res.status, 400);
+  it('rejects a body that is not an object or a batch of objects', async () => {
+    const primitives = await ingest([1, 2, 3]);
+    const scalar = await ingest(42);
+    assert.equal(primitives.status, 400);
+    assert.equal(scalar.status, 400);
+  });
+
+  it('stores a batch of readings', async () => {
+    const res = await ingest([{ n: 1 }, { n: 2 }, { n: 3 }]);
+    assert.equal(res.status, 201);
+    assert.deepEqual(res.body.map((reading) => reading.data.n), [1, 2, 3]);
+    const listed = await listReadings();
+    assert.equal(listed.body.length, 3);
   });
 
   it('lists readings newest first and applies limit', async () => {
@@ -99,5 +110,53 @@ describe('readings', () => {
     const otherUser = await createUser();
     const res = await listReadings('', otherUser.token);
     assert.equal(res.status, 404);
+  });
+
+  it('gets one reading by id', async () => {
+    const created = await ingest({ temperature: 19 });
+    const res = await server.request(`/api/user-devices/${userDevice.id}/readings/${created.body.id}`, {
+      token: owner.token,
+    });
+    assert.equal(res.status, 200);
+    assert.deepEqual(res.body, created.body);
+  });
+
+  it('returns 404 for a reading of another user or another device', async () => {
+    const created = await ingest({ temperature: 19 });
+    const path = `/api/user-devices/${userDevice.id}/readings/${created.body.id}`;
+    const otherUser = await createUser();
+    const foreign = await server.request(path, { token: otherUser.token });
+    const unknown = await server.request(`/api/user-devices/${userDevice.id}/readings/${randomUUID()}`, {
+      token: owner.token,
+    });
+    assert.equal(foreign.status, 404);
+    assert.equal(unknown.status, 404);
+  });
+
+  it('returns stats of readings in the period, per hour', async () => {
+    await ingest({ temperature: 20, humidity: 40 });
+    await ingest({ temperature: 24 });
+    await createReadingDaysAgo(10); // outside the default 7 days
+    const res = await server.request(`/api/user-devices/${userDevice.id}/readings/stats`, { token: owner.token });
+    assert.equal(res.status, 200);
+    assert.equal(res.body.bucket, 'hour');
+    assert.equal(res.body.count, 2);
+    assert.deepEqual(res.body.fields.temperature, { count: 2, min: 20, max: 24, avg: 22, p50: 20, p95: 24 });
+    assert.equal(res.body.fields.humidity.count, 1);
+    assert.equal(res.body.buckets.reduce((total, bucket) => total + bucket.count, 0), 2);
+  });
+
+  it('rejects an unknown stats bucket and hides stats of another user', async () => {
+    const path = `/api/user-devices/${userDevice.id}/readings/stats`;
+    const badBucket = await server.request(`${path}?bucket=week`, { token: owner.token });
+    const otherUser = await createUser();
+    const foreign = await server.request(path, { token: otherUser.token });
+    assert.equal(badBucket.status, 400);
+    assert.equal(foreign.status, 404);
+  });
+
+  it('rejects a reading id that is not a UUID', async () => {
+    const res = await server.request(`/api/user-devices/${userDevice.id}/readings/42`, { token: owner.token });
+    assert.equal(res.status, 400);
   });
 });
