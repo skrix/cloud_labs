@@ -27,6 +27,7 @@ API docs: http://localhost:3000/docs
 | Script                        | Description               |
 |-------------------------------|---------------------------|
 | `npm start` / `npm run dev`   | Start / start with watch  |
+| `npm run worker`              | Ingest worker: stores readings from the queue (needs `INGEST_QUEUE_URL`) |
 | `npm run db:migrate[:undo]`   | Run / undo migrations     |
 | `npm run db:seed[:undo]`      | Add / remove admin, catalog and demo data |
 | `npm run db:setup`            | Migrations + all seeds (each seeder runs once per database) |
@@ -48,6 +49,8 @@ ADMIN_PASSWORD # catalog seeder
 REDIS_URL      # cache for readings stats, e.g. redis://localhost:6379 (unset: no cache)
 CACHE_ENABLED  # true
 CACHE_TTL_SECONDS # 60
+INGEST_QUEUE_URL  # SQS queue for POST /ingest (unset: store synchronously, 201)
+AWS_REGION        # region of the queue
 PORT # 3000
 NODE_ENV
 ```
