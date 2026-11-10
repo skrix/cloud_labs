@@ -60,48 +60,66 @@ resource "aws_cloudwatch_dashboard" "api" {
       {
         type = "metric", x = 0, y = 0, width = 12, height = 6
         properties = {
-          title   = "Requests"
-          region  = var.region
-          stat    = "Sum"
-          period  = 60
-          metrics = [concat(["AWS/ApplicationELB", "RequestCount"], local.alb_dimensions)]
+          title  = "ECS tasks (desired / running)"
+          region = var.region
+          stat   = "Maximum"
+          period = 60
+          yAxis  = { left = { min = 0, max = var.autoscaling_max + 1 } }
+          metrics = [
+            concat(["ECS/ContainerInsights", "DesiredTaskCount"], local.ecs_dimensions, [{ label = "Desired" }]),
+            concat(["ECS/ContainerInsights", "RunningTaskCount"], local.ecs_dimensions, [{ label = "Running" }]),
+          ]
         }
       },
       {
         type = "metric", x = 12, y = 0, width = 12, height = 6
         properties = {
-          title  = "5xx errors"
+          title  = "API CPU / memory (%)"
+          region = var.region
+          stat   = "Average"
+          period = 60
+          yAxis  = { left = { min = 0, max = 100 } }
+          annotations = {
+            horizontal = [{ label = "Scale-out target", value = var.autoscaling_cpu_target }]
+          }
+          metrics = [
+            concat(["AWS/ECS", "CPUUtilization"], local.ecs_dimensions, [{ label = "CPU" }]),
+            concat(["AWS/ECS", "MemoryUtilization"], local.ecs_dimensions, [{ label = "Memory" }]),
+          ]
+        }
+      },
+      {
+        type = "metric", x = 0, y = 6, width = 8, height = 6
+        properties = {
+          title   = "Requests per minute"
+          region  = var.region
+          stat    = "Sum"
+          period  = 60
+          metrics = [concat(["AWS/ApplicationELB", "RequestCount"], local.alb_dimensions, [{ label = "Requests" }])]
+        }
+      },
+      {
+        type = "metric", x = 8, y = 6, width = 8, height = 6
+        properties = {
+          title  = "Latency p95 (seconds)"
+          region = var.region
+          period = 60
+          metrics = [
+            concat(["AWS/ApplicationELB", "TargetResponseTime"], local.alb_dimensions, [{ stat = "p95", label = "p95" }]),
+            concat(["AWS/ApplicationELB", "TargetResponseTime"], local.alb_dimensions, [{ stat = "p50", label = "p50" }]),
+          ]
+        }
+      },
+      {
+        type = "metric", x = 16, y = 6, width = 8, height = 6
+        properties = {
+          title  = "5xx responses per minute"
           region = var.region
           stat   = "Sum"
           period = 60
           metrics = [
             concat(["AWS/ApplicationELB", "HTTPCode_Target_5XX_Count"], local.alb_dimensions, [{ label = "API" }]),
             concat(["AWS/ApplicationELB", "HTTPCode_ELB_5XX_Count"], local.alb_dimensions, [{ label = "Load balancer" }]),
-          ]
-        }
-      },
-      {
-        type = "metric", x = 0, y = 6, width = 12, height = 6
-        properties = {
-          title  = "Latency (seconds)"
-          region = var.region
-          period = 60
-          metrics = [
-            concat(["AWS/ApplicationELB", "TargetResponseTime"], local.alb_dimensions, [{ stat = "p50", label = "p50" }]),
-            concat(["AWS/ApplicationELB", "TargetResponseTime"], local.alb_dimensions, [{ stat = "p95", label = "p95" }]),
-          ]
-        }
-      },
-      {
-        type = "metric", x = 12, y = 6, width = 12, height = 6
-        properties = {
-          title  = "API CPU / memory (%)"
-          region = var.region
-          stat   = "Average"
-          period = 60
-          metrics = [
-            concat(["AWS/ECS", "CPUUtilization"], local.ecs_dimensions),
-            concat(["AWS/ECS", "MemoryUtilization"], local.ecs_dimensions),
           ]
         }
       },
