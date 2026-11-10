@@ -55,3 +55,27 @@ jobs:
           cluster: ${{ vars.ECS_CLUSTER }}
           service: ${{ vars.ECS_SERVICE }}
           wait-for-service-stability: true
+
+      - name: download worker task definition
+        if: vars.ECS_WORKER_SERVICE != ''
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ vars.ECS_WORKER_TASK_FAMILY }} \
+            --query taskDefinition > worker-task-definition.json
+
+      - name: render worker task definition
+        if: vars.ECS_WORKER_SERVICE != ''
+        id: render-worker
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: worker-task-definition.json
+          container-name: worker
+          image: ${{ steps.build.outputs.image }}
+
+      - name: deploy worker
+        if: vars.ECS_WORKER_SERVICE != ''
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-worker.outputs.task-definition }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          service: ${{ vars.ECS_WORKER_SERVICE }}
+          wait-for-service-stability: true

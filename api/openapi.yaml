@@ -441,6 +441,10 @@ paths:
       description: >
         The body is one reading (a JSON object) or a batch of 1 to 1000 readings (an array of
         objects), e.g. readings a device buffered while offline. A batch is stored atomically.
+        With a queue (INGEST_QUEUE_URL set) the service checks the device key and the body,
+        queues the readings and answers 202; a worker stores them shortly after. Until then
+        GET /user-devices/{id}/readings/{readingId} answers 404. Without a queue the readings are
+        stored before the response (201).
       security:
         - deviceKey: []
       requestBody:
@@ -467,8 +471,28 @@ paths:
                   - $ref: '#/components/schemas/Reading'
                   - type: array
                     items: { $ref: '#/components/schemas/Reading' }
+        '202':
+          description: >
+            Accepted and queued (one reading, or an array for a batch). The ids and createdAt are
+            final; the readings become readable once the worker stores them.
+          headers:
+            Location:
+              description: Where the reading will be readable (single reading only)
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/AcceptedReading'
+                  - type: array
+                    items: { $ref: '#/components/schemas/AcceptedReading' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '413':
+          description: Body larger than one queue message (256 KB)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
 
 components:
   securitySchemes:
@@ -705,3 +729,13 @@ components:
               type: object
               additionalProperties: true
         - $ref: '#/components/schemas/Timestamps'
+
+    AcceptedReading:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        userDeviceId: { type: string, format: uuid }
+        data:
+          type: object
+          additionalProperties: true
+        createdAt: { type: string, format: date-time }

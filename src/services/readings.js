@@ -1,3 +1,4 @@
+const { randomUUID } = require('node:crypto');
 const { Op } = require('sequelize');
 const { sequelize } = require('../db');
 const { UserDevice, Reading } = require('../db/models');
@@ -5,6 +6,7 @@ const { HttpError } = require('../errors');
 const { hashApiKey } = require('../utils/crypto');
 const { readingStats } = require('../utils/stats');
 const { cache } = require('../cache');
+const { ingestQueue } = require('../queue');
 const { findOwnedUserDevice } = require('./user-devices');
 
 async function findUserDeviceByApiKey(apiKey) {
@@ -69,4 +71,31 @@ async function ingestReadings(apiKey, items) {
   });
 }
 
-module.exports = { listReadings, getReadingStats, getReading, ingestReading, ingestReadings };
+async function acceptReadings(apiKey, items) {
+  const userDevice = await findUserDeviceByApiKey(apiKey);
+  const createdAt = new Date().toISOString();
+  const readings = items.map((data) => ({ id: randomUUID(), userDeviceId: userDevice.id, data, createdAt }));
+  await ingestQueue.send({ readings });
+  return readings;
+}
+
+async function storeReadings(readings) {
+  const latest = readings.reduce((max, reading) => (reading.createdAt > max ? reading.createdAt : max), '');
+  await sequelize.transaction(async (transaction) => {
+    await Reading.bulkCreate(readings, { ignoreDuplicates: true, transaction });
+    await UserDevice.update(
+      { lastSeenAt: sequelize.fn('GREATEST', sequelize.col('lastSeenAt'), new Date(latest)) },
+      { where: { id: readings[0].userDeviceId }, transaction },
+    );
+  });
+}
+
+module.exports = {
+  listReadings,
+  getReadingStats,
+  getReading,
+  ingestReading,
+  ingestReadings,
+  acceptReadings,
+  storeReadings,
+};
