@@ -1,5 +1,3 @@
-// Shared cache in Redis for cache-aside reads. Off without REDIS_URL or with CACHE_ENABLED=false.
-// A Redis failure never fails a request: the read falls back to the database.
 const { createClient } = require('redis');
 const { logger } = require('./utils/logger');
 
@@ -24,8 +22,6 @@ function createCache({ client = null, ttlSeconds = DEFAULT_TTL_SECONDS } = {}) {
     }
   }
 
-  // Cache-aside: return a fresh cached value (HIT), otherwise load it, store it for ttlSeconds
-  // and return it (MISS). Without a client every call loads (OFF).
   async function getOrLoad(key, load) {
     if (!client) {
       return { value: await load(), status: 'OFF' };
@@ -46,7 +42,6 @@ function createRedisClient(url) {
   const client = createClient({
     url,
     socket: { connectTimeout: 2000, reconnectStrategy: (retries) => Math.min(retries * 200, 5000) },
-    // Fail fast instead of queueing commands while Redis is unreachable.
     disableOfflineQueue: true,
   });
   client.on('error', (error) => logger.error('redis error', { error: error.message }));

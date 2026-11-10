@@ -13,10 +13,9 @@ const server = app.listen(PORT, (error) => {
   logger.info('server started', { port: PORT });
 });
 
-// Longer than the ALB idle timeout (60 s), so the ALB closes idle connections first;
-// otherwise it can reuse a connection Node just closed and answer the client with 502.
-server.keepAliveTimeout = 65 * 1000;
-server.headersTimeout = 66 * 1000; // must be greater than keepAliveTimeout
+const ALB_IDLE_TIMEOUT_MS = 60 * 1000;
+server.keepAliveTimeout = ALB_IDLE_TIMEOUT_MS + 5 * 1000;
+server.headersTimeout = server.keepAliveTimeout + 1000;
 
 function shutdown(signal) {
   logger.info('shutdown started', { signal });

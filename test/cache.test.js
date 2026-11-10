@@ -2,7 +2,6 @@ const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const { createCache } = require('../src/cache');
 
-// In-memory stand-in for the Redis client: get / set with { EX } like node-redis.
 function fakeClient({ failing = false } = {}) {
   const store = new Map();
   return {
