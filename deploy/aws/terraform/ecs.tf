@@ -75,6 +75,9 @@ resource "aws_ecs_task_definition" "api" {
       { name = "PGPORT", value = tostring(aws_db_instance.main.port) },
       { name = "PGUSER", value = aws_db_instance.main.username },
       { name = "PGDATABASE", value = aws_db_instance.main.db_name },
+      { name = "REDIS_URL", value = local.redis_url },
+      { name = "CACHE_ENABLED", value = tostring(var.cache_enabled) },
+      { name = "CACHE_TTL_SECONDS", value = tostring(var.cache_ttl_seconds) },
     ]
     secrets = [
       { name = "PGPASSWORD", valueFrom = aws_ssm_parameter.db_password.arn },

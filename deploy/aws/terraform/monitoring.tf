@@ -148,7 +148,38 @@ resource "aws_cloudwatch_dashboard" "api" {
         }
       },
       {
-        type = "log", x = 0, y = 12, width = 24, height = 6
+        type = "metric", x = 0, y = 12, width = 12, height = 6
+        properties = {
+          title  = "Database CPU (%) / connections"
+          region = var.region
+          stat   = "Average"
+          period = 60
+          metrics = [
+            ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", aws_db_instance.main.identifier, { label = "CPU" }],
+            ["AWS/RDS", "DatabaseConnections", "DBInstanceIdentifier", aws_db_instance.main.identifier, { label = "Connections", yAxis = "right" }],
+          ]
+        }
+      },
+      {
+        type = "metric", x = 12, y = 12, width = 12, height = 6
+        properties = {
+          title  = "Database reads (MB/s) / Redis CPU (%)"
+          region = var.region
+          stat   = "Average"
+          period = 60
+          yAxis = {
+            left  = { label = "MB/s", showUnits = false, min = 0 }
+            right = { label = "%", showUnits = false, min = 0 }
+          }
+          metrics = [
+            [{ expression = "tx / 1000000", id = "reads", label = "Database reads" }],
+            ["AWS/RDS", "NetworkTransmitThroughput", "DBInstanceIdentifier", aws_db_instance.main.identifier, { id = "tx", visible = false }],
+            ["AWS/ECS", "CPUUtilization", "ClusterName", aws_ecs_cluster.main.name, "ServiceName", aws_ecs_service.redis.name, { label = "Redis CPU", yAxis = "right" }],
+          ]
+        }
+      },
+      {
+        type = "log", x = 0, y = 18, width = 24, height = 6
         properties = {
           title  = "Errors in API logs"
           region = var.region

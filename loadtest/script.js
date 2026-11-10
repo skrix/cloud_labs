@@ -3,6 +3,7 @@
 // (the owner looks at the new reading, the readings list and stats, the device and its catalog data).
 import http from 'k6/http';
 import { check, fail, sleep } from 'k6';
+import { Rate } from 'k6/metrics';
 import { textSummary } from 'https://jslib.k6.io/k6-summary/0.1.0/index.js';
 
 if (!__ENV.BASE_URL) {
@@ -146,6 +147,9 @@ function get(path, name, token) {
   return res;
 }
 
+// Share of readings stats answered from the cache (X-Cache: HIT); absent when the cache is off.
+const cacheHits = new Rate('cache_hits');
+
 let previousReadingId;
 
 export default function ({ slots }) {
@@ -174,13 +178,21 @@ export default function ({ slots }) {
   if (previousReadingId || readingId) {
     get(`${own}/readings/${previousReadingId || readingId}`, NAMES.reading, token);
   }
-  get(`${own}/readings/stats`, NAMES.stats, token);
+  const stats = get(`${own}/readings/stats`, NAMES.stats, token);
+  const cacheStatus = stats.headers['X-Cache'];
+  if (cacheStatus === 'HIT' || cacheStatus === 'MISS') {
+    cacheHits.add(cacheStatus === 'HIT');
+  }
 
   previousReadingId = readingId;
 }
 
 function ms(value) {
   return `${Math.round(value)} ms`;
+}
+
+function percent(rate) {
+  return `${(rate * 100).toFixed(1)} %`;
 }
 
 function report(data) {
@@ -208,6 +220,7 @@ function report(data) {
     `| Requests | ${reqs.count} |`,
     `| Throughput | ${reqs.rate.toFixed(1)} req/s |`,
     `| Iterations (1 write + 9 reads) | ${m.iterations.values.count} |`,
+    `| Stats cache hits | ${m.cache_hits ? percent(m.cache_hits.values.rate) : 'cache off'} |`,
     `| Error rate | ${(m[`http_req_failed{${LOAD}}`].values.rate * 100).toFixed(2)} % |`,
     `| Latency p50 | ${ms(d.med)} |`,
     `| Latency p95 | ${ms(d['p(95)'])} |`,

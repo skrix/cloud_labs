@@ -116,6 +116,7 @@ terraform output url
 | `autoscaling_cpu_target` | `70` | Target average CPU, %                |
 | `autoscaling_scale_out_cooldown` / `autoscaling_scale_in_cooldown` | `60` / `300` | Cooldowns, s |
 | `alert_latency_p95_ms` / `alert_latency_minutes` | `500` / `2` | Overload email alert ([docs/ALERTS.md](docs/ALERTS.md)) |
+| `cache_enabled` / `cache_ttl_seconds` | `true` / `60` | Redis cache for readings stats ([docs/CACHE.md](docs/CACHE.md)) |
 
 ### Continuous deployment
 

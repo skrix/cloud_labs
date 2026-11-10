@@ -65,3 +65,20 @@ variable "alert_latency_minutes" {
   type        = number
   default     = 2
 }
+
+variable "cache_enabled" {
+  description = "Cache-aside for readings stats in Redis (false: every read goes to the database)"
+  type        = bool
+  default     = true
+}
+
+variable "cache_ttl_seconds" {
+  description = "How long a cached readings stats response stays fresh, s"
+  type        = number
+  default     = 60
+
+  validation {
+    condition     = var.cache_ttl_seconds >= 30 && var.cache_ttl_seconds <= 60
+    error_message = "cache_ttl_seconds must be 30-60"
+  }
+}
