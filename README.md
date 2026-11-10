@@ -60,7 +60,6 @@ NODE_ENV
 | `ADMIN_EMAIL` (.env) | `ADMIN_PASSWORD` (.env) | admin |                              |
 | `alice@example.com` | `alice12345` | user  | `demo-key-kitchen`, `demo-key-balcony` |
 | `bob@example.com`   | `bob12345`   | user  | `demo-key-garage`                      |
-| `loadtest-0…5@example.com` | `loadtest12345` | user | `loadtest-key-0` … `loadtest-key-59` (10 devices per user, 30 days of readings; load test) |
 
 ## Admin and catalog on AWS
 
