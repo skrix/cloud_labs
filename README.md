@@ -29,10 +29,11 @@ API docs: http://localhost:3000/docs
 | `npm start` / `npm run dev`   | Start / start with watch  |
 | `npm run db:migrate[:undo]`   | Run / undo migrations     |
 | `npm run db:seed[:undo]`      | Add / remove admin, catalog and demo data |
-| `npm run db:setup`            | Migrations + all seeds (each seeder runs once per database) |
+| `npm run db:setup`            | Migrations + all seeds, each once per database (run on ECS task start) |
 | `npm run lint`                | ESLint                    |
 | `npm run db:test:create`      | Create the test database (once) |
 | `npm test`                    | Migrate the test database and run tests |
+| `npm run loadtest`            | k6 load test ([docs/LOADTEST.md](docs/LOADTEST.md)) |
 
 ## Environment
 
@@ -59,7 +60,14 @@ NODE_ENV
 | `ADMIN_EMAIL` (.env) | `ADMIN_PASSWORD` (.env) | admin |                              |
 | `alice@example.com` | `alice12345` | user  | `demo-key-kitchen`, `demo-key-balcony` |
 | `bob@example.com`   | `bob12345`   | user  | `demo-key-garage`                      |
-| `loadtest-0…5@example.com` | `loadtest12345` | user | `loadtest-key-0` … `loadtest-key-59` (10 devices per user, 30 days of readings; load test) |
+
+## Admin and catalog on AWS
+
+The ECS task runs `npm run db:setup` (migrations + all seeds) before the server starts. Like
+migrations, each seeder runs once per database: executed seeders are recorded in the
+`SequelizeData` table, so later task starts (deploys, autoscaling) skip them.
+The admin credentials are `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env`; `terraform apply` reads
+them from there into SSM parameters, and the task gets them as secrets.
 
 ## Promote an admin
 
@@ -104,6 +112,11 @@ terraform output url
 | `github_repo`  |                | `owner/repo` allowed to deploy          |
 | `budget_email` |                | Budget alert recipient                  |
 | `image_tag`    | `latest`       | Image tag built and run by Terraform    |
+| `autoscaling_min` / `autoscaling_max` | `1` / `4` | API task count range ([docs/AUTOSCALING.md](docs/AUTOSCALING.md)) |
+| `autoscaling_cpu_target` | `70` | Target average CPU, %                |
+| `autoscaling_scale_out_cooldown` / `autoscaling_scale_in_cooldown` | `60` / `300` | Cooldowns, s |
+| `alert_latency_p95_ms` / `alert_latency_minutes` | `500` / `2` | Overload email alert ([docs/ALERTS.md](docs/ALERTS.md)) |
+| `cache_enabled` / `cache_ttl_seconds` | `true` / `60` | Redis cache for readings stats ([docs/CACHE.md](docs/CACHE.md)) |
 
 ### Continuous deployment
 
@@ -131,6 +144,8 @@ src/
   utils/              crypto, jwt, logger
 api/openapi.yaml      OpenAPI spec for /docs
 test/                 unit and API tests
+loadtest/             k6 load test
+docs/                 lab reports
 deploy/aws/terraform/ AWS infrastructure
 .github/workflows/    CI and CD
 Dockerfile

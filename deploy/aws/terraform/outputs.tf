@@ -29,3 +29,7 @@ output "public_subnet_ids" {
 output "app_security_group_id" {
   value = aws_security_group.app.id
 }
+
+output "autoscaling_range" {
+  value = "${aws_appautoscaling_target.api.min_capacity}-${aws_appautoscaling_target.api.max_capacity}"
+}

@@ -1,5 +1,11 @@
 resource "aws_ecs_cluster" "main" {
   name = var.project
+
+  # RunningTaskCount / DesiredTaskCount metrics in ECS/ContainerInsights
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
 }
 
 resource "aws_cloudwatch_log_group" "api" {
@@ -30,9 +36,14 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect   = "Allow"
-      Action   = "ssm:GetParameters"
-      Resource = [aws_ssm_parameter.db_password.arn, aws_ssm_parameter.jwt_secret.arn]
+      Effect = "Allow"
+      Action = "ssm:GetParameters"
+      Resource = [
+        aws_ssm_parameter.db_password.arn,
+        aws_ssm_parameter.jwt_secret.arn,
+        aws_ssm_parameter.admin_email.arn,
+        aws_ssm_parameter.admin_password.arn,
+      ]
     }]
   })
 }
@@ -51,10 +62,11 @@ resource "aws_ecs_task_definition" "api" {
   }
 
   container_definitions = jsonencode([{
-    name         = "api"
-    image        = "${aws_ecr_repository.api.repository_url}:${var.image_tag}"
-    essential    = true
-    command      = ["sh", "-c", "npm run db:migrate && exec node src/server.js"]
+    name      = "api"
+    image     = "${aws_ecr_repository.api.repository_url}:${var.image_tag}"
+    essential = true
+    # pending migrations and seeders (each runs once per database) before the server starts
+    command      = ["sh", "-c", "npm run db:setup && exec node src/server.js"]
     portMappings = [{ containerPort = 3000, protocol = "tcp" }]
     environment = [
       { name = "NODE_ENV", value = "production" },
@@ -63,10 +75,15 @@ resource "aws_ecs_task_definition" "api" {
       { name = "PGPORT", value = tostring(aws_db_instance.main.port) },
       { name = "PGUSER", value = aws_db_instance.main.username },
       { name = "PGDATABASE", value = aws_db_instance.main.db_name },
+      { name = "REDIS_URL", value = local.redis_url },
+      { name = "CACHE_ENABLED", value = tostring(var.cache_enabled) },
+      { name = "CACHE_TTL_SECONDS", value = tostring(var.cache_ttl_seconds) },
     ]
     secrets = [
       { name = "PGPASSWORD", valueFrom = aws_ssm_parameter.db_password.arn },
       { name = "JWT_SECRET", valueFrom = aws_ssm_parameter.jwt_secret.arn },
+      { name = "ADMIN_EMAIL", valueFrom = aws_ssm_parameter.admin_email.arn },
+      { name = "ADMIN_PASSWORD", valueFrom = aws_ssm_parameter.admin_password.arn },
     ]
     logConfiguration = {
       logDriver = "awslogs"
@@ -85,7 +102,7 @@ resource "aws_ecs_service" "api" {
   name                              = "${var.project}-api"
   cluster                           = aws_ecs_cluster.main.id
   task_definition                   = aws_ecs_task_definition.api.arn
-  desired_count                     = 1
+  desired_count                     = var.autoscaling_min # initial only, then managed by autoscaling.tf
   launch_type                       = "FARGATE"
   health_check_grace_period_seconds = 60
 
@@ -106,9 +123,10 @@ resource "aws_ecs_service" "api" {
     rollback = true
   }
 
-  # CD registers new task definition revisions; don't roll them back on apply
+  # CD registers new task definition revisions; autoscaling owns desired_count.
+  # Don't revert either of them on apply.
   lifecycle {
-    ignore_changes = [task_definition]
+    ignore_changes = [task_definition, desired_count]
   }
 
   depends_on = [aws_lb_listener.http, aws_iam_role_policy_attachment.ecs_execution]

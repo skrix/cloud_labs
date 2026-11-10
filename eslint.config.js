@@ -22,4 +22,11 @@ module.exports = [
       'object-shorthand': 'error',
     },
   },
+  {
+    files: ['loadtest/**/*.js'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: { __ENV: 'readonly', __VU: 'readonly', __ITER: 'readonly' },
+    },
+  },
 ];
