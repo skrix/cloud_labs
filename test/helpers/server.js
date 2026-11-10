@@ -6,8 +6,8 @@ async function startServer() {
   await once(server, 'listening');
   const baseUrl = `http://localhost:${server.address().port}`;
 
-  async function request(path, { method = 'GET', token, apiKey, body } = {}) {
-    const headers = { 'Content-Type': 'application/json' };
+  async function request(path, { method = 'GET', token, apiKey, body, headers: extra = {} } = {}) {
+    const headers = { 'Content-Type': 'application/json', ...extra };
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }

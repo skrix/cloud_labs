@@ -21,4 +21,16 @@ function validateReadingBatch(body) {
   return body;
 }
 
-module.exports = { MAX_BATCH_SIZE, validateReadingData, validateReadingBatch };
+const IDEMPOTENCY_KEY_PATTERN = /^[\x21-\x7e]{1,255}$/;
+
+function validateIdempotencyKey(value) {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!IDEMPOTENCY_KEY_PATTERN.test(value)) {
+    throw new HttpError(400, 'Idempotency-Key must be 1 to 255 visible ASCII characters');
+  }
+  return value;
+}
+
+module.exports = { MAX_BATCH_SIZE, validateReadingData, validateReadingBatch, validateIdempotencyKey };
