@@ -45,6 +45,9 @@ PGDATABASE
 JWT_SECRET
 ADMIN_EMAIL    # catalog seeder
 ADMIN_PASSWORD # catalog seeder
+REDIS_URL      # cache for readings stats, e.g. redis://localhost:6379 (unset: no cache)
+CACHE_ENABLED  # true
+CACHE_TTL_SECONDS # 60
 PORT # 3000
 NODE_ENV
 ```

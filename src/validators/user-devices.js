@@ -60,6 +60,9 @@ function validateReadingsStatsQuery(query) {
     from: parseDate(query.from, 'from', new Date(Date.now() - DEFAULT_READINGS_PERIOD_MS)),
     to: parseDate(query.to, 'to', new Date()),
     bucket,
+    // The period as the client asked for it: the default window moves every millisecond,
+    // so cache keys use this instead of the computed dates.
+    periodKey: `${query.from ?? 'default'}..${query.to ?? 'now'}`,
   };
 }
 

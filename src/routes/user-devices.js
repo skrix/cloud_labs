@@ -57,7 +57,8 @@ router.get('/:id/readings', async (req, res) => {
 // Before /:id/readings/:readingId, which would otherwise take "stats" as a reading id.
 router.get('/:id/readings/stats', async (req, res) => {
   const query = validateReadingsStatsQuery(req.query);
-  res.json(await readingsService.getReadingStats(req.user.id, req.params.id, query));
+  const { value, status } = await readingsService.getReadingStats(req.user.id, req.params.id, query);
+  res.set('X-Cache', status).json(value);
 });
 
 router.get('/:id/readings/:readingId', async (req, res) => {
