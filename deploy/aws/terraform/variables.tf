@@ -82,3 +82,25 @@ variable "cache_ttl_seconds" {
     error_message = "cache_ttl_seconds must be 30-60"
   }
 }
+
+variable "ingest_queue_enabled" {
+  description = "POST /ingest queues readings for the worker (202) instead of storing them (201)"
+  type        = bool
+  default     = true
+}
+
+variable "worker_min" {
+  type    = number
+  default = 1
+}
+
+variable "worker_max" {
+  type    = number
+  default = 4
+}
+
+variable "worker_backlog_per_task" {
+  description = "Target queued messages per worker task for autoscaling"
+  type        = number
+  default     = 100
+}

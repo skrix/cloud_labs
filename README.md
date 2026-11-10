@@ -27,6 +27,7 @@ API docs: http://localhost:3000/docs
 | Script                        | Description               |
 |-------------------------------|---------------------------|
 | `npm start` / `npm run dev`   | Start / start with watch  |
+| `npm run worker`              | Ingest worker: stores readings from the queue (needs `INGEST_QUEUE_URL`) |
 | `npm run db:migrate[:undo]`   | Run / undo migrations     |
 | `npm run db:seed[:undo]`      | Add / remove admin, catalog and demo data |
 | `npm run db:setup`            | Migrations + all seeds, each once per database (run on ECS task start) |
@@ -49,6 +50,8 @@ ADMIN_PASSWORD # catalog seeder
 REDIS_URL      # cache for readings stats, e.g. redis://localhost:6379 (unset: no cache)
 CACHE_ENABLED  # true
 CACHE_TTL_SECONDS # 60
+INGEST_QUEUE_URL  # SQS queue for POST /ingest (unset: store synchronously, 201)
+AWS_REGION        # region of the queue
 PORT # 3000
 NODE_ENV
 ```
@@ -117,6 +120,8 @@ terraform output url
 | `autoscaling_scale_out_cooldown` / `autoscaling_scale_in_cooldown` | `60` / `300` | Cooldowns, s |
 | `alert_latency_p95_ms` / `alert_latency_minutes` | `500` / `2` | Overload email alert ([docs/ALERTS.md](docs/ALERTS.md)) |
 | `cache_enabled` / `cache_ttl_seconds` | `true` / `60` | Redis cache for readings stats ([docs/CACHE.md](docs/CACHE.md)) |
+| `ingest_queue_enabled` | `true` | `POST /ingest` through SQS and the worker (202) ([docs/QUEUE.md](docs/QUEUE.md)) |
+| `worker_min` / `worker_max` / `worker_backlog_per_task` | `1` / `4` / `100` | Worker autoscaling on queued messages per task |
 
 ### Continuous deployment
 
