@@ -139,6 +139,7 @@ describe('readings', () => {
     await createReadingDaysAgo(10); // outside the default 7 days
     const res = await server.request(`/api/user-devices/${userDevice.id}/readings/stats`, { token: owner.token });
     assert.equal(res.status, 200);
+    assert.equal(res.headers['x-cache'], 'OFF');
     assert.equal(res.body.bucket, 'hour');
     assert.equal(res.body.count, 2);
     assert.deepEqual(res.body.fields.temperature, { count: 2, min: 20, max: 24, avg: 22, p50: 20, p95: 24 });

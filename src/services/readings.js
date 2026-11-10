@@ -4,6 +4,7 @@ const { UserDevice, Reading } = require('../db/models');
 const { HttpError } = require('../errors');
 const { hashApiKey } = require('../utils/crypto');
 const { readingStats } = require('../utils/stats');
+const { cache } = require('../cache');
 const { findOwnedUserDevice } = require('./user-devices');
 
 async function findUserDeviceByApiKey(apiKey) {
@@ -26,14 +27,16 @@ async function listReadings(userId, userDeviceId, { from, to, limit }) {
   });
 }
 
-async function getReadingStats(userId, userDeviceId, { from, to, bucket }) {
+async function getReadingStats(userId, userDeviceId, { from, to, bucket, periodKey }) {
   await findOwnedUserDevice(userId, userDeviceId);
-  const readings = await Reading.findAll({
-    attributes: ['data', 'createdAt'],
-    where: { userDeviceId, createdAt: { [Op.between]: [from, to] } },
-    raw: true,
+  return cache.getOrLoad(`stats:${userDeviceId}:${bucket}:${periodKey}`, async () => {
+    const readings = await Reading.findAll({
+      attributes: ['data', 'createdAt'],
+      where: { userDeviceId, createdAt: { [Op.between]: [from, to] } },
+      raw: true,
+    });
+    return { from, to, bucket, ...readingStats(readings, bucket) };
   });
-  return { from, to, bucket, ...readingStats(readings, bucket) };
 }
 
 async function getReading(userId, userDeviceId, readingId) {

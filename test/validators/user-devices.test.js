@@ -67,6 +67,12 @@ describe('validateReadingsStatsQuery', () => {
     assert.ok(Math.abs(query.to - query.from - 7 * DAY_MS) < 1000);
   });
 
+  it('keys the period as requested, not as computed', () => {
+    assert.equal(validateReadingsStatsQuery({}).periodKey, 'default..now');
+    const from = '2026-01-01T00:00:00Z';
+    assert.equal(validateReadingsStatsQuery({ from }).periodKey, `${from}..now`);
+  });
+
   it('accepts day buckets and rejects others', () => {
     assert.equal(validateReadingsStatsQuery({ bucket: 'day' }).bucket, 'day');
     assert.throws(() => validateReadingsStatsQuery({ bucket: 'week' }), { status: 400 });

@@ -403,6 +403,10 @@ paths:
       responses:
         '200':
           description: Reading statistics
+          headers:
+            X-Cache:
+              description: HIT (from the cache), MISS (computed and cached) or OFF (no cache)
+              schema: { type: string, enum: [HIT, MISS, OFF] }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ReadingStats' }

@@ -17,7 +17,7 @@ async function startServer() {
 
     const res = await fetch(`${baseUrl}${path}`, { method, headers, body: JSON.stringify(body) });
     const text = await res.text();
-    return { status: res.status, body: text ? JSON.parse(text) : undefined };
+    return { status: res.status, headers: Object.fromEntries(res.headers), body: text ? JSON.parse(text) : undefined };
   }
 
   function close() {

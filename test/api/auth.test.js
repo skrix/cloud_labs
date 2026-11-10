@@ -52,6 +52,7 @@ describe('auth', () => {
       body: { ...CREDENTIALS, email: 'nobody@example.com' },
     });
     assert.equal(wrongPassword.status, 401);
-    assert.deepEqual(unknownEmail, wrongPassword);
+    assert.equal(unknownEmail.status, wrongPassword.status);
+    assert.deepEqual(unknownEmail.body, wrongPassword.body);
   });
 });

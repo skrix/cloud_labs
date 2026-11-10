@@ -60,6 +60,7 @@ function validateReadingsStatsQuery(query) {
     from: parseDate(query.from, 'from', new Date(Date.now() - DEFAULT_READINGS_PERIOD_MS)),
     to: parseDate(query.to, 'to', new Date()),
     bucket,
+    periodKey: `${query.from ?? 'default'}..${query.to ?? 'now'}`,
   };
 }
 
