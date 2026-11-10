@@ -1,7 +1,8 @@
 # Alerts
 
-Email alert про перевантаження сервісу: перший лист — коли latency надто висока, другий — коли
-вона повертається до норми.
+Email alert про перевантаження сервісу:
+- перший — коли latency надто висока
+- другий — коли вона повертається до норми.
 
 Terraform: [`deploy/aws/terraform/monitoring.tf`](../deploy/aws/terraform/monitoring.tf).
 
@@ -39,20 +40,6 @@ Terraform: [`deploy/aws/terraform/monitoring.tf`](../deploy/aws/terraform/monito
 порогу, коли кожна зміна стану надсилає лист. Довше вікно (5–10 хвилин) ще надійніше від шуму,
 але затримує перший лист на той самий час.
 
-## Як працює
-
-- `aws_cloudwatch_metric_alarm.api_latency_p95` щохвилини оцінює latency p95 за даними load
-  balancer. Дві хвилини поспіль понад 500 мс → стан **ALARM**, і `alarm_actions` публікує
-  повідомлення в SNS-тему. Перша хвилина нижче порогу → стан **OK**, і `ok_actions` публікує
-  друге повідомлення.
-- `aws_sns_topic.alerts` і `aws_sns_topic_subscription.alerts_email` (протокол `email`, адреса —
-  `budget_email`) доставляють обидва повідомлення листами. Після `terraform apply` AWS надсилає
-  лист із підтвердженням підписки; доки її не підтверджено, листи не доставляються.
-- Без трафіку метрики немає, і `treat_missing_data = "notBreaching"` вважає це нормою: простій
-  уночі не є перевантаженням.
-- На dashboard графік «Latency p95» має лінію порогу 500 мс (Alert threshold), тож момент
-  перетину видно поруч із CPU і кількістю задач.
-
 ## Прогін
 
 Load test `loadtest/results/20261110T121622Z` (N = 100, target 70 %), 10 листопада. Зверху —
@@ -73,17 +60,6 @@ dashboard за 12:10–13:00 **UTC**; знизу — вхідні листи в 
 | Alarm переходить у OK         | 12:29:19 |                                                                       |
 | Другий лист (OK)              | 12:29    | 14:29 за Києвом; `OK: "iot-hub-api-latency-p95" in EU (Stockholm)`    |
 
-**Час від початку сталого навантаження до першого листа — ≈ 4 хвилини** (12:20:15 → 12:24:19).
-Друга хвилина понад порогом (12:21) закінчилася о 12:22:00; ще ≈ 2 хвилини 20 с пішло на
-публікацію хвилинної точки load balancer у CloudWatch і на оцінювання alarm. Лист прийшов у ту
-саму хвилину, що й зміна стану. Другий лист прийшов через ≈ 3 хвилини після першої «нормальної»
-хвилини (12:26) з тих самих причин.
-
-Під час прогону load balancer повернув 10 відповідей 502 (1 о 12:19, 1 о 12:23, 8 о 12:25 — під
-час реєстрації нових задач): це проблема keep-alive, виправлена в `src/server.js`, але ще не
-розгорнута. Звіт k6: 85 210 запитів, помилок 0,01 %, latency p50 / p95 / p99 —
-249 / 636 / 1035 мс.
-
 ## Час реакції
 
 Від початку перевантаження до листа минає **≈ 4 хвилини** (у прогоні вище — 4 хвилини 4 с):
@@ -97,29 +73,7 @@ dashboard за 12:10–13:00 **UTC**; знизу — вхідні листи в 
 **Чи прийнятно це для реального сервісу.** Для черговості (on-call) ≈ 4 хвилини — нормальний
 час: людині все одно потрібні хвилини, щоб відреагувати, а autoscaling за цей час уже додає
 задачі (у цьому прогоні scale-out о 12:23:32 — ще до листа; див.
-[AUTOSCALING.md](AUTOSCALING.md)). Лист тут — сигнал, що автоматика не встигає або не допомагає,
+[AUTOSCALING.md](AUTOSCALING.md)). Лист тут — сигнал, що autoscaling не встигає або не допомагає,
 а не заміна їй. Скоротити час можна метриками з високою роздільністю (10 с) і умовою на кшталт
 «3 з 5 точок», але ціною частіших хибних спрацювань. Для критичних сервісів пошта — надто
 повільний канал: краще PagerDuty, Slack або SMS через ту саму SNS-тему.
-
-## Перевірка
-
-```sh
-cd deploy/aws/terraform
-terraform apply
-aws cloudwatch describe-alarms --alarm-names iot-hub-api-latency-p95 \
-  --query 'MetricAlarms[0].[StateValue,Threshold,EvaluationPeriods]'
-aws sns list-subscriptions-by-topic --topic-arn "$(aws sns list-topics \
-  --query "Topics[?ends_with(TopicArn, ':iot-hub-alerts')].TopicArn" --output text)"
-# після тесту — історія змін стану
-aws cloudwatch describe-alarm-history --alarm-name iot-hub-api-latency-p95 \
-  --history-item-type StateUpdate --query 'AlarmHistoryItems[].[Timestamp,HistorySummary]'
-```
-
-Без load test лист можна перевірити, примусово змінивши стан alarm (CloudWatch поверне його за
-наступного оцінювання):
-
-```sh
-aws cloudwatch set-alarm-state --alarm-name iot-hub-api-latency-p95 \
-  --state-value ALARM --state-reason "manual test"
-```
