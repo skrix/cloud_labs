@@ -39,7 +39,7 @@ variable "autoscaling_max" {
 variable "autoscaling_cpu_target" {
   description = "Target average CPU utilization of the API service, %"
   type        = number
-  default     = 50
+  default     = 70
 }
 
 variable "autoscaling_scale_out_cooldown" {
