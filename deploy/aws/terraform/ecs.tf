@@ -55,6 +55,7 @@ resource "aws_ecs_task_definition" "api" {
   cpu                      = "256"
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_execution.arn
+  task_role_arn            = aws_iam_role.api_task.arn
 
   runtime_platform {
     operating_system_family = "LINUX"
@@ -78,6 +79,8 @@ resource "aws_ecs_task_definition" "api" {
       { name = "REDIS_URL", value = local.redis_url },
       { name = "CACHE_ENABLED", value = tostring(var.cache_enabled) },
       { name = "CACHE_TTL_SECONDS", value = tostring(var.cache_ttl_seconds) },
+      { name = "INGEST_QUEUE_URL", value = var.ingest_queue_enabled ? aws_sqs_queue.ingest.url : "" },
+      { name = "AWS_REGION", value = var.region },
     ]
     secrets = [
       { name = "PGPASSWORD", valueFrom = aws_ssm_parameter.db_password.arn },

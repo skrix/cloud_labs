@@ -33,3 +33,15 @@ output "app_security_group_id" {
 output "autoscaling_range" {
   value = "${aws_appautoscaling_target.api.min_capacity}-${aws_appautoscaling_target.api.max_capacity}"
 }
+
+output "ingest_queue_url" {
+  value = aws_sqs_queue.ingest.url
+}
+
+output "ecs_worker_service" {
+  value = aws_ecs_service.worker.name
+}
+
+output "ecs_worker_task_family" {
+  value = aws_ecs_task_definition.worker.family
+}

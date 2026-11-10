@@ -179,11 +179,57 @@ resource "aws_cloudwatch_dashboard" "api" {
         }
       },
       {
-        type = "log", x = 0, y = 18, width = 24, height = 6
+        type = "metric", x = 0, y = 18, width = 8, height = 6
         properties = {
-          title  = "Errors in API logs"
+          title  = "Ingest queue: messages waiting / age of oldest (s)"
           region = var.region
-          query  = "SOURCE '${aws_cloudwatch_log_group.api.name}' | fields @timestamp, @message | filter level = 'error' or status >= 500 | sort @timestamp desc | limit 50"
+          stat   = "Maximum"
+          period = 60
+          yAxis = {
+            left  = { label = "Messages", showUnits = false, min = 0 }
+            right = { label = "Seconds", showUnits = false, min = 0 }
+          }
+          metrics = [
+            ["AWS/SQS", "ApproximateNumberOfMessagesVisible", "QueueName", aws_sqs_queue.ingest.name, { label = "Waiting" }],
+            ["AWS/SQS", "ApproximateNumberOfMessagesNotVisible", "QueueName", aws_sqs_queue.ingest.name, { label = "Being processed" }],
+            ["AWS/SQS", "ApproximateAgeOfOldestMessage", "QueueName", aws_sqs_queue.ingest.name, { label = "Age of oldest", yAxis = "right" }],
+            ["AWS/SQS", "ApproximateNumberOfMessagesVisible", "QueueName", aws_sqs_queue.ingest_dlq.name, { label = "Dead letter" }],
+          ]
+        }
+      },
+      {
+        type = "metric", x = 8, y = 18, width = 8, height = 6
+        properties = {
+          title  = "Ingest messages per minute (queued / stored)"
+          region = var.region
+          stat   = "Sum"
+          period = 60
+          metrics = [
+            ["AWS/SQS", "NumberOfMessagesSent", "QueueName", aws_sqs_queue.ingest.name, { label = "Queued by API" }],
+            ["AWS/SQS", "NumberOfMessagesDeleted", "QueueName", aws_sqs_queue.ingest.name, { label = "Stored by worker" }],
+          ]
+        }
+      },
+      {
+        type = "metric", x = 16, y = 18, width = 8, height = 6
+        properties = {
+          title  = "Worker tasks (desired / running)"
+          region = var.region
+          stat   = "Maximum"
+          period = 60
+          yAxis  = { left = { min = 0, max = var.worker_max + 1 } }
+          metrics = [
+            ["ECS/ContainerInsights", "DesiredTaskCount", "ClusterName", aws_ecs_cluster.main.name, "ServiceName", aws_ecs_service.worker.name, { label = "Desired" }],
+            ["ECS/ContainerInsights", "RunningTaskCount", "ClusterName", aws_ecs_cluster.main.name, "ServiceName", aws_ecs_service.worker.name, { label = "Running" }],
+          ]
+        }
+      },
+      {
+        type = "log", x = 0, y = 24, width = 24, height = 6
+        properties = {
+          title  = "Errors in API / worker logs"
+          region = var.region
+          query  = "SOURCE '${aws_cloudwatch_log_group.api.name}' | SOURCE '${aws_cloudwatch_log_group.worker.name}' | fields @timestamp, @log, @message | filter level = 'error' or status >= 500 | sort @timestamp desc | limit 50"
           view   = "table"
         }
       },

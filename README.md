@@ -120,6 +120,8 @@ terraform output url
 | `autoscaling_scale_out_cooldown` / `autoscaling_scale_in_cooldown` | `60` / `300` | Cooldowns, s |
 | `alert_latency_p95_ms` / `alert_latency_minutes` | `500` / `2` | Overload email alert ([docs/ALERTS.md](docs/ALERTS.md)) |
 | `cache_enabled` / `cache_ttl_seconds` | `true` / `60` | Redis cache for readings stats ([docs/CACHE.md](docs/CACHE.md)) |
+| `ingest_queue_enabled` | `true` | `POST /ingest` through SQS and the worker (202) ([docs/QUEUE.md](docs/QUEUE.md)) |
+| `worker_min` / `worker_max` / `worker_backlog_per_task` | `1` / `4` / `100` | Worker autoscaling on queued messages per task |
 
 ### Continuous deployment
 
